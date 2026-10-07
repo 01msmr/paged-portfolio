@@ -948,8 +948,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
   const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .15, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 15 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
-  const LIQ_TRAVEL = 1.5;                                               // zurückgelegter Weg (Pillenbreiten): 1,5 × so lang bei gleichem Tempo
-  const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
+    const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
     clearTimeout(liqTimer); cancelAnimationFrame(liqRaf); liqRaf = 0;
@@ -966,22 +965,33 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     if (lamPx * lamPx / (q4 * amp) < r) amp = lamPx * lamPx / (q4 * r);
     else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
     const lam = lamPx / L, up = amp, base = up;
+    // Wellenpaket mit 1 bis 3 Kuppen (so viele, wie auf das gerade Stück passen): halbe Breite hwP (Anteil der Pillenbreite). Die äußersten Lappen
+    // sind Kuppen, nie Mulden (bei gerader Kuppenzahl liegt in der Mitte eine Mulde) — die Linie sackt nie zuerst ab. Das Paket beginnt, wandert und
+    // endet ganz innerhalb des geraden Stücks zwischen den Endkappen [r, L]: sein Mittelpunkt bleibt dort, mit Abstand zum Rand.
+    const aIn = r / L, nFit = Math.max(1, Math.min(3, Math.floor((1 - aIn) * .9 / lam))), nCrest = 1 + Math.floor(Math.random() * nFit), hwP = lam * nCrest / 2;
+    const cMin = aIn + .6 * hwP, cMax = 1 - .6 * hwP, cMid = (cMin + cMax) / 2, travel = Math.max(0, cMax - cMin), phase = nCrest % 2 ? 0 : Math.PI;
     const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1, ph1 = Math.random() * 6.3, ph2 = Math.random() * 6.3;
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(LIQ_DUR * 60) + 2);
     for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .7 * bell((i - .5) / 60 / LIQ_DUR)) / 60;
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
-    const dsp = new Float32Array(N), f2 = q => q.toFixed(2);
+    const dsp = new Float32Array(N), T = Math.max(.12 * L, Math.min(.25 * L, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
     const t0 = performance.now();
     const frame = now => {
       const t = (now - t0) / 1000;
       if (t >= LIQ_DUR) { liqEnd(); return; }                             // Ende nach 7,2 s Bewegung: saubere Linie
       const gate = smooth7(Math.min(t, LIQ_DUR - t) / (LIQ_DUR / 2));      // wächst bis zur Mitte und geht genauso wieder: das Gehen ist das Spiegelbild des Kommens — G3, nie plötzlich weg
-      // seitliche Bewegung: klar sichtbar (LIQ_TRAVEL Breiten) mit leicht zufälligem Wiegen
-      const c = .5 + dir * LIQ_TRAVEL * (Iat(t) - .5) + .022 * Math.sin(1.7 * t + ph1) + .015 * Math.sin(3.1 * t + ph2);
-      for (let j = 0; j < N; j++) dsp[j] = -amp * gate * Math.cos(2 * Math.PI * (j / (N - 1) - c) / lam);   // < 0: über der Oberkante
-      for (let j = 0; j < N; j++) { const x = j / (N - 1); dsp[j] *= smooth7(Math.min(x, 1 - x) / .22); }   // Enden waagerecht, sehr sanft (G3)
+      // seitliche Bewegung innerhalb des geraden Stücks, mit leicht zufälligem Wiegen
+      const c = cMid + dir * travel * (Iat(t) - .5) + .008 * Math.sin(1.7 * t + ph1) + .005 * Math.sin(3.1 * t + ph2);
+      for (let j = 0; j < N; j++) {                                       // ein Wellenpaket: Kuppen nur dort, wo es gerade ist — davor und danach bleibt die Linie gerade
+        const d = j / (N - 1) - c, u = Math.abs(d) / hwP;
+        const v = u < 1 ? -amp * gate * smooth7(1 - u) * Math.cos(2 * Math.PI * d / lam + phase) : 0;   // < 0: über der Oberkante; Paketrand G3
+        dsp[j] = v > 0 ? v * .55 : v;                                     // Mulden flacher als Kuppen: eine Kuppe führt immer, die Linie sackt nie zuerst ab
+      }
+      // Die Welle lebt nur auf dem geraden Stück zwischen den Enden: links beginnt sie erst hinter dem Radius der Endkappe (r), rechts endet sie vor
+      // der Rundung (bei L = Breite − r) — und läuft an beiden Seiten mit stetiger Krümmung (G3) auf null aus, schneidet also nie in die Halbkreise
+      for (let j = 0; j < N; j++) { const xp = j / (N - 1) * L; dsp[j] *= smooth7((xp - r) / T) * smooth7((L - xp) / T); }
       const P = i => { const j = Math.max(0, Math.min(N - 1, i)); return [j / (N - 1) * L, base + dsp[j]]; };
       let [x1, y1] = P(0), d = `M${f2(x1)} ${f2(y1)}`;
       for (let i = 0; i < N - 1; i++) {                                  // Catmull-Rom-Spline durch alle Stützstellen: glatt, keine Knicke
