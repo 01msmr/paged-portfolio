@@ -928,6 +928,22 @@ document.querySelectorAll('.card[data-shot]').forEach(card => {
   });
 });
 
+/* Ruhebild: 1,5 s ohne Zeigerbewegung, Berührung, Scrollen oder Taste → das Bild der sichtbaren Karte wächst ein (CSS .rest-img); jede Aktivität blendet es sofort aus */
+{
+  const cards = [...document.querySelectorAll('.card[data-shot]')], seen = new Set();
+  const vis = new IntersectionObserver(es => es.forEach(en => { en.isIntersecting ? seen.add(en.target) : seen.delete(en.target); }), { threshold: .6 });
+  cards.forEach(c => { vis.observe(c); c.style.setProperty('--full', `url(${c.dataset.shot})`); });
+  let restT;
+  const rest = on => cards.forEach(c => {
+    if (on && seen.has(c)) c.classList.add('rest');
+    else c.classList.remove('rest');
+  });
+  const active = () => { rest(false); clearTimeout(restT); restT = setTimeout(() => rest(true), 1500); };
+  ['pointermove', 'pointerdown', 'touchstart', 'touchmove', 'wheel', 'keydown'].forEach(t => addEventListener(t, active, { passive: true }));
+  addEventListener('scroll', active, { passive: true, capture: true });
+  active();
+}
+
 /* ═══ 6 Link-Pille beim Verlassen: Kopie fährt nach links hinaus ═══ */
 document.querySelectorAll('.title a, .links a').forEach(a => {
   const leave = () => {

@@ -83,7 +83,7 @@ $icon = random_int(0, $n - 1);               // Icon in einer der Projektfarben 
   <section class="slide" id="<?= e($p['id']) ?>" style="--hl:<?= color($p) ?>">
     <article class="card"<?= isset($p['shot']) ? ' data-shot="' . e($p['shot']) . '"' : '' ?>>
 <?php if (isset($p['shot'])): ?>
-      <canvas class="shot" aria-hidden="true"></canvas><span class="shot full" aria-hidden="true"></span>
+      <canvas class="shot" aria-hidden="true"></canvas><span class="shot full" aria-hidden="true"></span><span class="rest-img" aria-hidden="true"></span>
 <?php endif; ?>
       <i class="edge" aria-hidden="true"></i>   <!-- Kontur: über Flüssigkeit, Raster und Bild, unter Zahl und Schrift -->
       <div class="meta"><?php foreach ($p['tech'] as $t): ?><span class="d"><span class="dx"><?= e($t) ?></span></span><?php endforeach; ?></div>
