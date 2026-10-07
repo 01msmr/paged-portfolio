@@ -939,7 +939,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     g.animate([{ transform:'none' }, { transform:'translateX(-100vw)' }],
               { duration:367, easing:'cubic-bezier(.55,0,.9,.35)' }).onfinish = () => g.remove();
   };
-  /* Nach 1,2 s Hover läuft 4,8 s lang eine Bewegung aus 1 bis 3 Wellen über die ganze Oberkante der Pille: kein Abschnitt mit eigenem Anfang und Ende,
+  /* Nach 1,2 s Hover läuft 4,8 s lang eine Bewegung aus ein paar Wellen über die ganze Oberkante der Pille: kein Abschnitt mit eigenem Anfang und Ende,
      sondern eine durchgehende, sinusförmige Welle (eine Kuppe, eine Mulde; die Kuppe höchstens ≈ 38 % der Breite), die mit
      seitlich wandert, mit weich wechselndem Tempo (nie null) — sie steht nie still. Sie wächst weich aus der Linie, schwillt und
      flacht wieder zur sauberen Linie ab. Mit 50 % Wahrscheinlichkeit läuft eine zweite, kleinere Welle mit anderem Tempo in Gegenrichtung
@@ -948,7 +948,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
   const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .18, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: höchstens 18 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
-  const LIQ_LAMBDA = .75, LIQ_TRAVEL = 1;                               // Wellenlänge bei einer Welle (Anteil der Pillenbreite); zurückgelegter Weg (Breiten) — doppelt so schnell wie zuvor (.5)
+  const LIQ_TRAVEL = 1;                                                 // zurückgelegter Weg (Pillenbreiten) — doppelt so schnell wie zuvor (.5)
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
@@ -958,13 +958,14 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
   const liqStart = () => {
     const fs = parseFloat(getComputedStyle(a).fontSize), W = a.clientWidth, H = a.clientHeight + .06 * fs;   // Pille: .02em über, .04em unter dem Link
     const r = Math.min(.54 * fs, W / 2), L = W - r;                                                      // r: Eckenradius; L: gerade Strecke oben
-    const n = 1 + Math.floor(Math.random() * 3);                          // 1 bis 3 Wellen in einer Bewegung
-    // eine Wellenfolge cos(2π (x − c(t)) / λ): Kuppen bei c + m·λ, Mulden dazwischen; λ passt zu n (n = 1: ≈ 38 % breite Kuppe)
-    const lam = [LIQ_LAMBDA, .5, .4][n - 1], k2 = (2 * Math.PI / (lam * L)) ** 2;   // k2: Krümmung je px Höhe (Wellenlänge in px)
-    // Höhe: so groß, dass nichts enger gekrümmt ist als der halbe Radius der Pillenenden — von vornherein, nicht durch nachträgliches
-    // Kappen —, mindestens LIQ_MIN px (auch bei kleinen Pillen), aber nie mehr als LIQ_AMP · Pillenhöhe (18 %)
-    const amp = Math.min(LIQ_AMP * H, Math.max(LIQ_MIN, 1.4 / (r * k2))), up = amp, base = up;
-    a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // Ecken zeichnet der Pfad selbst
+    // Höhe und Breite der Welle sind zufällig: die Wellenlänge λ liegt zwischen 40 % und 80 % der Pillenbreite (Kuppe λ/2 ≤ 40 %), die
+    // Höhe zwischen 50 % und 100 % von LIQ_AMP · Pillenhöhe (18 %). Der Krümmungsradius der Kuppe, cos(2π (x − c(t)) / λ): λ² / (4π² · Höhe),
+    // muss zwischen r und 3 r liegen (r: Radius der Pillenenden): zu spitz → flacher; zu flach → höher (bis 18 %), sonst schmaler.
+    const cap = LIQ_AMP * H, q4 = 4 * Math.PI * Math.PI;
+    let lamPx = L * (.4 + .4 * Math.random()), amp = Math.max(Math.min(LIQ_MIN, cap), cap * (.5 + .5 * Math.random()));
+    if (lamPx * lamPx / (q4 * amp) < r) amp = lamPx * lamPx / (q4 * r);
+    else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
+    const lam = lamPx / L, up = amp, base = up;
     const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1, ph1 = Math.random() * 6.3, ph2 = Math.random() * 6.3;
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
