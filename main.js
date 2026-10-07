@@ -975,14 +975,14 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
     const lam = lamPx / L, up = amp, base = up;
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // oben Luft für die Welle; Ecken zeichnet der Pfad selbst
-    const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1, ph1 = Math.random() * 6.3, ph2 = Math.random() * 6.3;
+    const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1;
     const travel = LIQ_TRAVEL * randN(1, .35, .5, 1.9);                 // zufälliges Tempo: zurückgelegter Weg 0,5–1,9 ×, meist um 1 — deutlich unterschiedlich
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(dur * 60) + 2);
-    // dazu schwankt das Seitentempo innerhalb der Bewegung zufällig (zwei langsame Schwingungen, glockenförmig verteilte Stärke; selten bis fast zum Stillstand, nie ganz: Untergrenze ×0,06)
-    const m1 = randN(.3, .1, .1, .5), m2 = randN(.15, .05, .05, .25), g1 = .12 + .13 * Math.random(), g2 = .3 + .2 * Math.random(), q1 = Math.random() * 6.3, q2 = Math.random() * 6.3;
-    for (let i = 1; i < I.length; i++) { const tt = (i - .5) / 60; I[i] = I[i - 1] + (1 + .7 * bell(tt / dur)) * Math.max(.06, 1 + m1 * Math.sin(2 * Math.PI * g1 * tt + q1) + m2 * Math.sin(2 * Math.PI * g2 * tt + q2)) / 60; }
+    // Seitentempo: nur EIN glatter Verlauf (smooth7, G3) — langsam–schnell–langsam, oder (Stärke ≈ 0) gleichmäßig langsam–langsam–langsam; keine weiteren Tempowechsel
+    const pk = randN(.6, .35, 0, 1.2);   // wie viel schneller die Mitte ist als Anfang/Ende (0 = durchgehend gleich)
+    for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + pk * bell((i - .5) / 60 / dur)) / 60;
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
     const dsp = new Float32Array(N), T = Math.max(.04 * L, Math.min(.08 * L, .15 * lamPx, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
     const t0 = performance.now();
@@ -991,7 +991,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
       if (t >= dur) { liqEnd(); return; }                                 // Ende der Bewegung: saubere Linie
       const gate = smooth7(Math.min(t, dur - t) / (dur / 2));      // wächst bis zur Mitte und geht genauso wieder: das Gehen ist das Spiegelbild des Kommens — G3, nie plötzlich weg
       // seitliche Bewegung: klar sichtbar (zufälliger Weg) mit leicht zufälligem Wiegen
-      const c = .5 + dir * travel * (Iat(t) - .5) + .022 * Math.sin(1.7 * t + ph1) + .015 * Math.sin(3.1 * t + ph2);
+      const c = .5 + dir * travel * (Iat(t) - .5);
       for (let j = 0; j < N; j++) dsp[j] = -amp * gate * Math.cos(2 * Math.PI * (j / (N - 1) - c) / lam);   // < 0: über der Oberkante
       // Die Welle lebt nur auf dem geraden Stück zwischen den Endkappen: links beginnt sie erst hinter dem Radius der Kappe (r), rechts endet sie vor
       // der Rundung (bei L = Breite − r) — beidseitig mit stetiger Krümmung (G3) auf null auslaufend, schneidet also nie in die Halbkreise
