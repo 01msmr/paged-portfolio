@@ -944,7 +944,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      Mittellinie (die Oberkante) — zufällig oben oder unten, nie zwei Abschnitte direkt nebeneinander. Die Pille bekommt dafür oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, in px), mit denselben Ecken wie
      sonst. Kuppen und Mulden sind nie enger als der halbe Radius der Pillenenden. Jeder Abschnitt läuft räumlich und zeitlich mit stetiger Krümmung aus (G3: (1−u²)⁴-Profil, Fenster mit verschwindender
      1.–3. Ableitung); die Pillenenden links und rechts bleiben waagerecht. Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1500, LIQ_N = 140, LIQ_AMP = .16, LIQ_MAX = 3;                  // Höhe über und Tiefe unter der Mittellinie: Anteil der Pillenhöhe
+  const LIQ_AFTER = 1500, LIQ_N = 140, LIQ_AMP = .16;                  // Höhe über und Tiefe unter der Mittellinie: Anteil der Pillenhöhe
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
@@ -958,23 +958,23 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const t0 = performance.now(); let next = .15, waves = [];
     const frame = now => {
       const t = (now - t0) / 1000;
-      if (t >= next && waves.length < LIQ_MAX) {                        // laufend neue Wellen, bis zu drei zugleich
+      if (t >= next && !waves.length) {                                 // eine Welle zugleich, in zufälligen Abständen
+        const n = Math.random() < .7 ? 3 : 5;                            // Halbschwingungen: hoch–runter–hoch (oder ein Schwung mehr)
         const hw = .12 + .08 * Math.random();                            // halbe Breite (Anteil von L): 24 %–40 % der Breite, weit und rund
-        waves.push({ c: .15 + .7 * Math.random(), hw, t0: t, dur: 3.5 + Math.random() * 2,
-                     v: (Math.random() < .5 ? -1 : 1) * (.006 + .012 * Math.random()),  // kaum Drift (Anteil von L je Sekunde)
-                     f: 1.6 + .8 * Math.random(), ph: Math.random() * 6.3,              // hebt und senkt sich über und unter die Mittellinie
-                     a: LIQ_AMP * (.85 + .15 * Math.random()) });
-        next = t + .5 + Math.random() * .9;
+        waves.push({ c: .03 + hw + Math.random() * (.94 - 2 * hw), hw, t0: t, n, dur: 1.5 * n * (.85 + .3 * Math.random()),
+                     s: Math.random() < .5 ? -1 : 1, a: LIQ_AMP * (.85 + .15 * Math.random()) });   // beginnt zufällig nach oben oder unten
+        next = t + 1 + Math.random() * 2.4;
       }
       waves = waves.filter(w => t < w.t0 + w.dur);
       const rise = new Float32Array(LIQ_N + 1);                          // rise > 0: über die Oberkante hinaus (px)
       for (let i = 1; i < LIQ_N; i++) {
         const x = i / LIQ_N;
         for (const w of waves) {
-          const u = (x - (w.c + w.v * (t - w.t0))) / w.hw;               // steht fast am Platz (kaum Drift)
+          const u = (x - w.c) / w.hw;                                    // steht an seinem Platz
           if (Math.abs(u) >= 1) continue;
-          const k = (t - w.t0) / w.dur, env = smooth7(Math.min(k, 1 - k) * 2.2);   // löst sich weich auf und wieder ein: wächst, schrumpft, verschwindet
-          rise[i] += w.a * H * env * Math.cos(w.f * (t - w.t0) + w.ph) * (1 - u * u) ** 4;   // runde Kuppe, die sich über und unter die Mittellinie hebt und senkt; Enden G3
+          const k = (t - w.t0) / w.dur;                                  // 0 → 1 über das Leben der Welle
+          // hoch, runter, hoch … und weg: sin(nπk) hat n Halbschwingungen und endet bei 0; das Fenster blendet sanft ein und aus (G3)
+          rise[i] += w.s * w.a * H * Math.sin(w.n * Math.PI * k) * smooth7(Math.min(k, 1 - k) * 4) * (1 - u * u) ** 4;
         }
         rise[i] *= smooth7(Math.min(x, 1 - x) / .1);                     // an den Pillenenden waagerecht auslaufen (G3)
       }
