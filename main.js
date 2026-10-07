@@ -952,7 +952,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
    Touch (iPhone/iPad, kein Cursor): die eingerastete Karte füllt sich; die Wölbung
    wandert zu zufälligen Stellen, dazu leichte Stöße — Finger auf der Karte bewegt das Wasser auch. */
 if (!calm.matches) {
-  const touch = !matchMedia('(hover:hover) and (pointer:fine)').matches;
+  const isTouchUI = !matchMedia('(hover:hover) and (pointer:fine)').matches;
   root.classList.add('liquid');
   const N = 44;               // Stützstellen der Oberfläche — viele für eine feine Kurve …
   const TENSION = .0035;      // zieht jede Stelle zurück auf den Pegel (schwach: langsame Wellen)
@@ -961,7 +961,7 @@ if (!calm.matches) {
   // Pegel als kritisch gedämpfte Feder: sanfter Anlauf, weiches Ankommen, Tempo ohne Knick
   // (auch beim Umkehren mitten im Füllen). Maus: voll nach ≈ 1,5 s;
   // Touch: 85 % nach ≈ 0,39 s, passend zur Navigation (NAV_AFTER_FILL).
-  const OMEGA = touch ? 8.4 : 4;   // 25 % langsamer als zuvor (10,5 / 5)
+  const OMEGA = isTouchUI ? 8.4 : 4;   // 25 % langsamer als zuvor (10,5 / 5)
   const PUSH = .015, PRESS = .02;    // seitliches Schieben / Drücken nahe der Oberfläche (sanft)
   const BULGE = .8, REACH = .24;     // Wölbung zum Cursor: Stärke (hoch), Breite (Anteil der Kartenbreite)
   const LAG = .35;                   // Sekunden: die Wölbung folgt einer geglätteten Cursorposition
@@ -980,7 +980,7 @@ if (!calm.matches) {
     const size = () => { s.w = card.clientWidth; s.h = card.clientHeight; svg.setAttribute('viewBox', `0 0 ${s.w} ${s.h}`); draw(s); };
     new ResizeObserver(size).observe(card);
     const wake = () => { live.add(s); if (!raf) { t0 = 0; raf = requestAnimationFrame(loop); } };
-    if (touch) {
+    if (isTouchUI) {
       // Touch: Füllung, sobald die Karte fast eingerastet ist (99,4 % im Bild). Beim Verlassen bleibt sie voll;
       // erst ganz außer Sicht wird sie unsichtbar zurückgesetzt, damit sie beim nächsten Mal wieder steigt.
       // Karten höher als der Bildschirm: bezogen auf den Anteil, der überhaupt ins Bild passt.
@@ -1034,7 +1034,7 @@ if (!calm.matches) {
     s.lv += (OMEGA * OMEGA * (s.target - s.level) - 2 * OMEGA * s.lv) * dt;   // Feder: Beschleunigung aus Abstand und Tempo
     s.level += s.lv * dt;
     s.t += dt;
-    if (touch && s.mx !== null)               // kein Cursor: Wölbung gleitet ohne Pause auf überlagerten, langsamen Bahnen
+    if (isTouchUI && s.mx !== null)               // kein Cursor: Wölbung gleitet ohne Pause auf überlagerten, langsamen Bahnen
       s.mx = .5 + .3 * Math.sin(s.t * .37 + s.ph) + .12 * Math.sin(s.t * .91 + s.ph * 2.3);
     if (s.mx === null) s.ms = null;           // geglättete Position: die Wölbung folgt träge, ohne Ruck
     else {

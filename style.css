@@ -252,7 +252,6 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2p
   margin:clamp(1.5rem,4vh,3rem) 0 0;max-width:24ch;
   font-size:clamp(1.5rem,3vw,2.25rem);font-weight:500;line-height:1.14;letter-spacing:-.05em;
 }
-.lede span{color:var(--mute)}
 .cue{
   margin-top:auto;display:flex;justify-content:space-between;
   font:400 .8125rem var(--mono);color:var(--mute);letter-spacing:0;
@@ -419,7 +418,6 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2p
   transition:transform 0s,opacity .12s linear,inset 1.1s var(--out);
 }
 
-.body{margin:0;max-width:60ch}
 .tagline{margin:0;max-width:30ch;font-size:calc(clamp(1.25rem,2.2vw,1.75rem) * var(--fs-c) * var(--fit, 1));line-height:1.15;letter-spacing:-.05em;color:var(--mute)}   /* Rechner: 1,4-fach wie alle Kartenschrift */
 .tagline--lines{max-width:none}                          /* eigene Umbrüche (\n): keine Breitengrenze, umbrochen wird nur, wo die Karte zu schmal ist */
 
