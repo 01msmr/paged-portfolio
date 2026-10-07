@@ -947,7 +947,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      1.–3. Ableitung, kein Überschwingen); an den Pillenenden läuft die Welle nur dadurch aus. Nie enger gekrümmt als die Pillenenden
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .2, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: Anteil der Pillenhöhe, mindestens LIQ_MIN px
+  const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .18, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: höchstens 18 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
   const LIQ_LAMBDA = .75, LIQ_TRAVEL = 1;                               // Wellenlänge bei einer Welle (Anteil der Pillenbreite); zurückgelegter Weg (Breiten) — doppelt so schnell wie zuvor (.5)
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
@@ -961,9 +961,9 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const n = 1 + Math.floor(Math.random() * 3);                          // 1 bis 3 Wellen in einer Bewegung
     // eine Wellenfolge cos(2π (x − c(t)) / λ): Kuppen bei c + m·λ, Mulden dazwischen; λ passt zu n (n = 1: ≈ 38 % breite Kuppe)
     const lam = [LIQ_LAMBDA, .5, .4][n - 1], k2 = (2 * Math.PI / (lam * L)) ** 2;   // k2: Krümmung je px Höhe (Wellenlänge in px)
-    // Höhe: LIQ_AMP · Pillenhöhe, höchstens so groß, dass nichts enger gekrümmt ist als der halbe Radius der Pillenenden — von vornherein,
-    // nicht durch nachträgliches Kappen — und mindestens LIQ_MIN px, auch bei kleinen Pillen
-    const amp = Math.max(LIQ_MIN, Math.min(LIQ_AMP * H, 1.4 / (r * k2))), up = amp, base = up;
+    // Höhe: so groß, dass nichts enger gekrümmt ist als der halbe Radius der Pillenenden — von vornherein, nicht durch nachträgliches
+    // Kappen —, mindestens LIQ_MIN px (auch bei kleinen Pillen), aber nie mehr als LIQ_AMP · Pillenhöhe (18 %)
+    const amp = Math.min(LIQ_AMP * H, Math.max(LIQ_MIN, 1.4 / (r * k2))), up = amp, base = up;
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // Ecken zeichnet der Pfad selbst
     const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1, ph1 = Math.random() * 6.3, ph2 = Math.random() * 6.3;
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
