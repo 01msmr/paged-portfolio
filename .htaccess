@@ -17,6 +17,8 @@
 </IfModule>
 
 <IfModule mod_headers.c>
+  # Gilt auch für Bilder, Schrift und Skripte (die übrigen Sicherheits-Kopfzeilen setzt index.php)
+  Header always set X-Content-Type-Options "nosniff"
   # Seite immer frisch holen
   <FilesMatch "\.(html|php)$">
     Header set Cache-Control "no-cache"

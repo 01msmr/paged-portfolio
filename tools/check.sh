@@ -16,5 +16,6 @@ for ((i = 0; i < n; i++)); do
   done
 done
 
+test -f img/og.png || { echo "FEHLT: img/og.png"; exit 1; }
 echo "· Projektfarben";         python3 tools/colors.py
 echo "alles in Ordnung"

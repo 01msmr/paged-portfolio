@@ -2,6 +2,13 @@
 /* msmr.dev — die Seite wird aus projects.json gebaut (eine Quelle für Karten, Navigation,
    Linkseite, Zähler und Icons). Kein Build-Schritt: der Server rendert bei jedem Aufruf. */
 
+// Sicherheits-Kopfzeilen (vor jeder Ausgabe). Alles kommt von der eigenen Adresse; Skripte stehen nie im Seitentext.
+// style-src 'unsafe-inline': die Elemente tragen Stilangaben direkt (style="--hl:…" je Projekt) und main.js setzt Stile per Skript.
+header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+
 $projects = json_decode(file_get_contents(__DIR__ . '/projects.json'), true, 512, JSON_THROW_ON_ERROR);   // kaputtes JSON: lauter Fehler statt count(null)
 $n = count($projects);
 
@@ -29,6 +36,14 @@ $icon = random_int(0, $n - 1);               // Icon in einer der Projektfarben 
 <meta property="og:title" content="msmr.dev — Projects">
 <meta property="og:description" content="web &amp; more. <?= $count ?> projects, one screen each.">
 <meta property="og:url" content="https://msmr.dev/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="msmr.dev">
+<meta property="og:image" content="<?= e('https://msmr.dev/' . asset('img/og.png')) ?>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="msmr.dev: web &amp; more.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://msmr.dev/">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e0f10" media="(prefers-color-scheme: dark)">
 
