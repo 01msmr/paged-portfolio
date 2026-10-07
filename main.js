@@ -630,6 +630,7 @@ if (fsOk) {
 }
 
 if (!pagerOn) addEventListener('wheel', ev => { // senkrecht: jede Geste eine Karte, im Tempo der Geste
+  if (ev.ctrlKey || ev.metaKey) return;          // Zoomen (Strg/Cmd + Rad, Trackpad-Zweifingerzoom) bleibt dem Browser
   if (ev.target.closest && ev.target.closest('.nav')) return;
   if (Math.abs(ev.deltaY) <= Math.abs(ev.deltaX)) return;
   ev.preventDefault();
@@ -642,6 +643,7 @@ if (!pagerOn) addEventListener('wheel', ev => { // senkrecht: jede Geste eine Ka
 document.querySelector('.cue a').addEventListener('click', ev => { ev.preventDefault(); go(1); });
 let wheelLock = 0;
 addEventListener('wheel', ev => {
+  if (ev.ctrlKey || ev.metaKey) return;
   if (ev.target.closest && ev.target.closest('.nav')) return;   // der Streifen scrollt selbst
   if (Math.abs(ev.deltaX) < 30 || Math.abs(ev.deltaX) < Math.abs(ev.deltaY) * 1.5) return;
   const now = Date.now();
