@@ -968,8 +968,8 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     // Zufällig je Bewegung: Zahl der Wellen (1–3 Kuppen auf dem geraden Stück), Höhe, Tempo und Richtung
     const nWaves = Math.min(3, Math.max(1, Math.round(randN(2, .95, .5, 3.5))));   // Zahl der Kuppen 1–3, etwas häufiger 2
     let amp = cap * randN(.72, .16, .4, 1), lamPx = (L - r) * .9 / nWaves * (.92 + .16 * Math.random());   // Höhe zufällig (auch bei kleinen Pillen), Wellenlänge für nWaves Kuppen
-    // Krümmungsradius der Kuppe R = λ² / (4π² · Höhe): nie kleiner als der Radius r der Pillenenden (mindestens so groß — nicht „gleich“), höchstens 3 r
-    const lamMin = Math.sqrt(q4 * amp * r), lamFit = .9 * (L - r);
+    // Krümmungsradius der Kuppe R = λ² / (4π² · Höhe): nie kleiner als der Radius r der Pillenenden (mindestens so groß — nicht „gleich“), höchstens 3 r   // bevorzugt ≥ 1,6 r (kurze Pillen wie „Do Day“ bekommen so weniger, weitere Kuppen); hart bleibt ≥ r
+    const lamMin = Math.sqrt(q4 * amp * 1.6 * r), lamFit = .9 * (L - r);
     if (lamPx < lamMin) lamPx = Math.min(lamFit, lamMin * (1 + .35 * Math.random()));                      // zu eng → weniger, weitere Kuppen (zufällig weiter als nötig)
     if (lamPx * lamPx / (q4 * amp) < r) amp = lamPx * lamPx / (q4 * r);                                     // nur wenn nicht einmal eine Kuppe so weit passt: flacher
     else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
