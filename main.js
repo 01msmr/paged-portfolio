@@ -944,7 +944,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      Mittellinie (die Oberkante) — zufällig oben oder unten, nie zwei Abschnitte direkt nebeneinander. Die Pille bekommt dafür oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, in px), mit denselben Ecken wie
      sonst. Kuppen und Mulden sind nie enger als der halbe Radius der Pillenenden. Jeder Abschnitt läuft räumlich und zeitlich mit stetiger Krümmung aus (G3: (1−u²)⁴-Profil, Fenster mit verschwindender
      1.–3. Ableitung); die Pillenenden links und rechts bleiben waagerecht. Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1500, LIQ_N = 140, LIQ_AMP = .16;                  // Höhe über und Tiefe unter der Mittellinie: Anteil der Pillenhöhe
+  const LIQ_AFTER = 1500, LIQ_N = 140, LIQ_AMP = .16, LIQ_MAX = 3;                  // Höhe über und Tiefe unter der Mittellinie: Anteil der Pillenhöhe
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
@@ -958,23 +958,25 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const t0 = performance.now(); let next = .15, waves = [];
     const frame = now => {
       const t = (now - t0) / 1000;
-      if (t >= next && !waves.length) {                                 // nur ein Abschnitt zugleich, dazwischen Ruhe
-        const hw = .16 + .1 * Math.random();                             // halbe Breite (Anteil von L): 32 %–52 % der Breite, weit und rund
-        const dur = 2.4 + Math.random() * 1.4;
-        waves.push({ c: .03 + hw + Math.random() * (.94 - 2 * hw), hw, t0: t, dur, ph: Math.random() * 6.3,
-                     a: (Math.random() < .5 ? -1 : 1) * LIQ_AMP * (.85 + .15 * Math.random()) });   // zufällig über oder unter der Mittellinie
-        next = t + dur + .5 + Math.random() * 1.8;
+      if (t >= next && waves.length < LIQ_MAX) {                        // laufend neue Wellen, bis zu drei zugleich
+        const hw = .12 + .08 * Math.random();                            // halbe Breite (Anteil von L): 24 %–40 % der Breite, weit und rund
+        waves.push({ c: .15 + .7 * Math.random(), hw, t0: t, dur: 3.5 + Math.random() * 2,
+                     v: (Math.random() < .5 ? -1 : 1) * (.006 + .012 * Math.random()),  // kaum Drift (Anteil von L je Sekunde)
+                     f: 1.6 + .8 * Math.random(), ph: Math.random() * 6.3,              // hebt und senkt sich über und unter die Mittellinie
+                     a: LIQ_AMP * (.85 + .15 * Math.random()) });
+        next = t + .5 + Math.random() * .9;
       }
       waves = waves.filter(w => t < w.t0 + w.dur);
       const rise = new Float32Array(LIQ_N + 1);                          // rise > 0: über die Oberkante hinaus (px)
       for (let i = 1; i < LIQ_N; i++) {
         const x = i / LIQ_N;
         for (const w of waves) {
-          const u = (x - w.c - .02 * Math.sin(1.3 * t + w.ph)) / w.hw;   // Abschnitt schwankt leicht seitlich
+          const u = (x - (w.c + w.v * (t - w.t0))) / w.hw;               // steht fast am Platz (kaum Drift)
           if (Math.abs(u) >= 1) continue;
-          const k = (t - w.t0) / w.dur, env = smooth7(Math.min(k, 1 - k) * 3);     // weich ein- und ausblenden
-          rise[i] += w.a * H * env * (1 - u * u) ** 4;   // eine runde Kuppe (a > 0) oder Mulde (a < 0); Enden mit stetiger Krümmung (G3)
+          const k = (t - w.t0) / w.dur, env = smooth7(Math.min(k, 1 - k) * 2.2);   // löst sich weich auf und wieder ein: wächst, schrumpft, verschwindet
+          rise[i] += w.a * H * env * Math.cos(w.f * (t - w.t0) + w.ph) * (1 - u * u) ** 4;   // runde Kuppe, die sich über und unter die Mittellinie hebt und senkt; Enden G3
         }
+        rise[i] *= smooth7(Math.min(x, 1 - x) / .1);                     // an den Pillenenden waagerecht auslaufen (G3)
       }
       // Kuppen und Mulden nie enger als der halbe Radius der Pillenenden: wo die Krümmung überschritten würde, wird die Welle flacher
       const dx = L / LIQ_N, rmin = r / 2;
