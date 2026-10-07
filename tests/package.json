@@ -1,0 +1,12 @@
+{
+  "name": "msmr-dev-tests",
+  "private": true,
+  "type": "module",
+  "description": "Browser tests for msmr.dev (development only, never loaded by the site)",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

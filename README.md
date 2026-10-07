@@ -32,6 +32,16 @@ Push to `main`. A GitHub webhook tells the netcup server to pull. `bash tools/ch
 
 `style.css` and `main.js` are linked with their modification time (`?v=…`), so browsers cache them for a year and still load a new version right after a change. The page itself is always fetched fresh.
 
+## Tests and measurements
+
+Only for development: nothing in `tests/` is ever loaded by the site, and the site itself still has no build step.
+
+```sh
+cd tests && npm ci && npx playwright install chromium webkit && npm test
+```
+
+Playwright starts its own `php -S` on port 8765 and runs two environments: `desktop` (Chromium, 1280 × 800, mouse) and `phone` (WebKit, iPhone 13, touch). Files named `*.desktop.spec.js`, `*.phone.spec.js` and `*.both.spec.js` run in the matching environment(s). The same tests run on every push (`.github/workflows/tests.yml`).
+
 ## Adding a project
 
 1. Add an entry to `projects.json`, in timeline position (newest first):
