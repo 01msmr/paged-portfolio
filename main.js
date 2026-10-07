@@ -947,7 +947,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      1.–3. Ableitung, kein Überschwingen); an den Pillenenden läuft die Welle nur dadurch aus. Nie enger gekrümmt als die Pillenenden
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .15, LIQ_MIN = 7;   // Mittelwerte: Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 15 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
+  const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .12, LIQ_MIN = 7;   // Mittelwerte: Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 12 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
   const LIQ_TRAVEL = 1.5;                                               // zurückgelegter Weg (Pillenbreiten): 1,5 × so lang bei gleichem Tempo
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   // Zufall mit Glockenkurve (Normalverteilung, auf [lo, hi] begrenzt): Werte um den Mittelwert sind häufig, extreme selten
@@ -961,7 +961,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const fs = parseFloat(getComputedStyle(a).fontSize), W = a.clientWidth, H = a.clientHeight + .06 * fs;   // Pille: .02em über, .04em unter dem Link
     const r = Math.min(.54 * fs, W / 2), L = W - r;                                                      // r: Eckenradius; L: gerade Strecke oben
     // Höhe und Breite der Welle sind zufällig: die Wellenlänge λ liegt zwischen 40 % und 80 % der Pillenbreite (Kuppe λ/2 ≤ 40 %), die
-    // Höhe zwischen 50 % und 100 % von LIQ_AMP · Pillenhöhe (15 %). Der Krümmungsradius der Kuppe, cos(2π (x − c(t)) / λ): λ² / (4π² · Höhe),
+    // Höhe zwischen 50 % und 100 % von LIQ_AMP · Pillenhöhe (12 %). Der Krümmungsradius der Kuppe, cos(2π (x − c(t)) / λ): λ² / (4π² · Höhe),
     // muss zwischen r und 3 r liegen (r: Radius der Pillenenden): zu spitz → flacher; zu flach → höher (bis 15 %), sonst schmaler.
     const dur = randN(LIQ_DUR, .7, LIQ_DUR - 1.4, LIQ_DUR + 1.4);                                       // Dauer der Bewegung, glockenförmig um 7,2 s
     const cap = LIQ_AMP * H, q4 = 4 * Math.PI * Math.PI;
