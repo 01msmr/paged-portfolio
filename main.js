@@ -939,7 +939,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     g.animate([{ transform:'none' }, { transform:'translateX(-100vw)' }],
               { duration:367, easing:'cubic-bezier(.55,0,.9,.35)' }).onfinish = () => g.remove();
   };
-  /* Nach 1,2 s Hover läuft 4,8 s lang EINE Welle über die ganze Oberkante der Pille: kein Abschnitt mit eigenem Anfang und Ende,
+  /* Nach 1,2 s Hover laufen 4,8 s lang 2 oder 3 Wellen nacheinander über die ganze Oberkante der Pille: kein Abschnitt mit eigenem Anfang und Ende,
      sondern eine durchgehende, sinusförmige Welle (eine Kuppe, eine Mulde; die Kuppe höchstens ≈ 38 % der Breite), die mit
      seitlich wandert, mit weich wechselndem Tempo (nie null) — sie steht nie still. Sie wächst weich aus der Linie, schwillt und
      flacht wieder zur sauberen Linie ab. Mit 50 % Wahrscheinlichkeit läuft eine zweite, kleinere Welle mit anderem Tempo in Gegenrichtung
@@ -948,7 +948,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
   const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .16;       // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: Anteil der Pillenhöhe
-  const LIQ_LAMBDA = .75, LIQ_SPEED = .038;                             // Wellenlänge (Anteil der Pillenbreite) und Grundtempo (Breiten je Sekunde; schwillt auf bis ×1,6)
+  const LIQ_LAMBDA = .75, LIQ_SPEED = .048;                             // Wellenlänge (Anteil der Pillenbreite) und Grundtempo (Breiten je Sekunde; schwillt auf bis ×1,7)
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
@@ -959,33 +959,38 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const fs = parseFloat(getComputedStyle(a).fontSize), W = a.clientWidth, H = a.clientHeight + .06 * fs;   // Pille: .02em über, .04em unter dem Link
     const r = Math.min(.54 * fs, W / 2), L = W - r, up = LIQ_AMP * H, base = up;                         // r: Eckenradius; L: gerade Strecke oben
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // Ecken zeichnet der Pfad selbst
-    const dir = Math.random() < .5 ? -1 : 1, two = Math.random() < .5, N = LIQ_N;
-    // jede Welle: cos(2π (x − c(t)) / λ) mit c(t) = Mitte + Tempo · (t − Mitte der Bewegung): Kuppe bei c, Mulden bei c ± λ/2
-    const waves = [{ lam: LIQ_LAMBDA, v: dir * LIQ_SPEED, off: 0, amp: 1, delay: 0 }];
-    if (two) waves.push({ lam: 1.05, v: -dir * LIQ_SPEED * .7, off: dir * .12, amp: .5, delay: .4 });   // zweite, kleinere, langsamer, entgegen
-    // Tempo schwillt weich an und ab (nie null, G3): Geschwindigkeit 1 + .6 · Glocke, der Weg ist ihr Integral (vorab je 1/60 s)
+    const N = LIQ_N, nW = Math.random() < .5 ? 2 : 3;                      // 2 oder 3 Bewegungen hintereinander
+    // jede Bewegung: cos(2π (x − c(τ)) / λ), Kuppe bei c, Mulden bei c ± λ/2; die nächste beginnt, wenn die vorige halb durch ist
+    // (kein Zwischenraum), und läuft in Gegenrichtung; alle zusammen enden genau nach LIQ_DUR
+    const wdur = LIQ_DUR / (1 + (nW - 1) * .5), gap = wdur * .5, waves = [];
+    for (let i = 0, dir = Math.random() < .5 ? -1 : 1; i < nW; i++, dir = -dir)
+      waves.push({ lam: [LIQ_LAMBDA, .9, .8][i], dir, off: (Math.random() - .5) * .12, t0: i * gap, dur: wdur, rise: .5, fall: .5 + (Math.random() - .5) * .08 });   // fast symmetrisch: Abklingen ≈ Anwachsen, nicht identisch; sanft
+    // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
+    // der Weg ist ihr Integral (vorab je 1/60 s) — für alle Wellen dasselbe Tempo, also keine Folge schnell–langsam–schnell
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(LIQ_DUR * 60) + 2);
-    for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .6 * bell((i - .5) / 60 / LIQ_DUR)) / 60;
-    const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return I[i] + (I[i + 1] - I[i]) * (x - i); };
-    const norm = 1 / (1 + (two ? .5 : 0));
-    const dsp = new Float32Array(N), dx = L / (N - 1), f2 = q => q.toFixed(2);
+    for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .7 * bell((i - .5) / 60 / LIQ_DUR)) / 60;
+    const Iat = u => { const x = Math.min(I.length - 2, Math.max(0, u * 60)), i = Math.floor(x); return I[i] + (I[i + 1] - I[i]) * (x - i); };
+    const peakAt = .48 + (Math.random() - .5) * .06;                      // Höhepunkt knapp vor/hinter der Mitte: fast symmetrisch, nicht identisch
+    // Höhe: so groß wie die Krümmungsgrenze (nie enger als die Pillenenden, Radius r) und LIQ_AMP erlauben — von vornherein, nicht durch
+    // nachträgliches Kappen (das ließe die Welle früh auf eine Höhe springen und dort verharren)
+    const k2 = waves.map(w => (2 * Math.PI / (w.lam * L)) ** 2).sort((p, q) => q - p).slice(0, 2).reduce((p, q) => p + q, 0);   // Krümmung je px Höhe (Wellenlänge in px)
+    const norm = Math.min(1 / 1.25, .7 / (r * k2) / (LIQ_AMP * H));    // Höhe in px ≤ .7 / (r · k²): nie enger als die Pillenenden (mit Reserve für Fenster und Überlagerung)        // Überlagerungen bleiben im Rahmen
+    const dsp = new Float32Array(N), f2 = q => q.toFixed(2);
     const t0 = performance.now();
     const frame = now => {
       const t = (now - t0) / 1000;
       if (t >= LIQ_DUR) { liqEnd(); return; }                             // Ende nach 4,8 s Bewegung: saubere Linie
       for (let j = 0; j < N; j++) dsp[j] = 0;
-      for (const w of waves) {
-        const k = (t - w.delay) / (LIQ_DUR - w.delay);
-        const env = smooth7(Math.min(k / .38, (1 - k) / .38));            // wächst, schwillt, flacht ab — G3, ohne Überschwingen
-        if (env <= 0) continue;
-        const c = .5 + w.off + w.v * (Iat(t) - Iat(LIQ_DUR / 2));        // Tempo wechselt weich (G3), nie null
-        for (let j = 0; j < N; j++) dsp[j] -= LIQ_AMP * H * norm * w.amp * env * Math.cos(2 * Math.PI * (j / (N - 1) - c) / w.lam);   // < 0: über der Oberkante
+      const gate = smooth7(Math.min(t / (peakAt * LIQ_DUR), (LIQ_DUR - t) / ((1 - peakAt) * LIQ_DUR)));   // Höhe wächst bis zur Mitte, dann spiegelbildlich (fast symmetrisch) zurück — G3, nie plötzlich weg
+      for (let wi = 0; wi < nW; wi++) {
+        const w = waves[wi], u = t - w.t0, k = u / w.dur;
+        if (k <= 0 || k >= 1) continue;
+        const env = smooth7(Math.min(wi ? k / w.rise : 1, wi < nW - 1 ? (1 - k) / w.fall : 1));   // nur die Übergänge zwischen den Wellen; Anfang und Ende gestaltet allein `gate`
+        const c = .5 + w.off + w.dir * LIQ_SPEED * (Iat(t) - Iat(w.t0 + w.dur / 2));   // langsam–schnell–langsam, weich (G3), nie null
+        for (let j = 0; j < N; j++) dsp[j] -= LIQ_AMP * H * norm * gate * env * Math.cos(2 * Math.PI * (j / (N - 1) - c) / w.lam);   // < 0: über der Oberkante
       }
       for (let j = 0; j < N; j++) { const x = j / (N - 1); dsp[j] *= smooth7(Math.min(x, 1 - x) / .22); }   // Enden waagerecht, sehr sanft (G3)
-      let kmax = 0;                                                       // nie enger gekrümmt als die Pillenenden (Radius r)
-      for (let j = 1; j < N - 1; j++) { const d1 = (dsp[j + 1] - dsp[j - 1]) / (2 * dx), d2 = (dsp[j - 1] - 2 * dsp[j] + dsp[j + 1]) / (dx * dx); kmax = Math.max(kmax, Math.abs(d2) / (1 + d1 * d1) ** 1.5); }
-      const cl = kmax > 1 / r ? 1 / (r * kmax) : 1;
-      const P = i => { const j = Math.max(0, Math.min(N - 1, i)); return [j / (N - 1) * L, base + dsp[j] * cl]; };
+      const P = i => { const j = Math.max(0, Math.min(N - 1, i)); return [j / (N - 1) * L, base + dsp[j]]; };
       let [x1, y1] = P(0), d = `M${f2(x1)} ${f2(y1)}`;
       for (let i = 0; i < N - 1; i++) {                                  // Catmull-Rom-Spline durch alle Stützstellen: glatt, keine Knicke
         const [xa, ya] = P(i - 1); [x1, y1] = P(i); const [x2, y2] = P(i + 1), [x3, y3] = P(i + 2);
