@@ -981,7 +981,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(dur * 60) + 2);
     // dazu schwankt das Seitentempo innerhalb der Bewegung zufällig (zwei langsame Schwingungen, glockenförmig verteilte Stärke; selten bis fast zum Stillstand, nie ganz: Untergrenze ×0,06)
-    const m1 = randN(.4, .2, .05, .95), m2 = randN(.2, .1, .05, .45), g1 = .12 + .13 * Math.random(), g2 = .3 + .2 * Math.random(), q1 = Math.random() * 6.3, q2 = Math.random() * 6.3;
+    const m1 = randN(.3, .1, .1, .5), m2 = randN(.15, .05, .05, .25), g1 = .12 + .13 * Math.random(), g2 = .3 + .2 * Math.random(), q1 = Math.random() * 6.3, q2 = Math.random() * 6.3;
     for (let i = 1; i < I.length; i++) { const tt = (i - .5) / 60; I[i] = I[i - 1] + (1 + .7 * bell(tt / dur)) * Math.max(.06, 1 + m1 * Math.sin(2 * Math.PI * g1 * tt + q1) + m2 * Math.sin(2 * Math.PI * g2 * tt + q2)) / 60; }
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
     const dsp = new Float32Array(N), T = Math.max(.12 * L, Math.min(.25 * L, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
