@@ -313,7 +313,7 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2p
 .card.slow-out .shot:not(.full){transition:opacity 4s ease}                         /* Ausblenden nach Ablauf: langsam */
 .card:is(.is-shot,.is-full) .shot:not(.full){opacity:.15;transition:opacity .8s ease}
 /* Ruhebild: steht der Zeiger still bzw. wird nicht berührt, wächst das Bild in 6 s linear von immer sichtbaren 5 % auf 33 %; bei Bewegung/Berührung in 0,25 s (8× schneller) zurück auf 5 % */
-.rest-img{position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--full,none) center/cover no-repeat;opacity:.05;transition:opacity .25s linear}
+.rest-img{position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--full,none) center/cover no-repeat;opacity:.05;transition:opacity .25s ease-out}
 .card.rest:not(.is-shot):not(.is-full) .rest-img{opacity:.33;transition:opacity 6s linear}
 @media (prefers-reduced-motion:reduce){.rest-img,.card.rest .rest-img{transition:none}}
 .card.is-full .shot.full{clip-path:circle(150% at var(--cx,50%) var(--cy,50%));transition:clip-path 1.6s cubic-bezier(0,.9,.1,1)}
