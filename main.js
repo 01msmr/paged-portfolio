@@ -947,7 +947,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      1.–3. Ableitung, kein Überschwingen); an den Pillenenden läuft die Welle nur dadurch aus. Nie enger gekrümmt als die Pillenenden
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .18, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: höchstens 18 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
+  const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .15, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: höchstens 15 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
   const LIQ_TRAVEL = 1;                                                 // zurückgelegter Weg (Pillenbreiten) — doppelt so schnell wie zuvor (.5)
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
@@ -960,7 +960,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const r = Math.min(.54 * fs, W / 2), L = W - r;                                                      // r: Eckenradius; L: gerade Strecke oben
     // Höhe und Breite der Welle sind zufällig: die Wellenlänge λ liegt zwischen 40 % und 80 % der Pillenbreite (Kuppe λ/2 ≤ 40 %), die
     // Höhe zwischen 50 % und 100 % von LIQ_AMP · Pillenhöhe (18 %). Der Krümmungsradius der Kuppe, cos(2π (x − c(t)) / λ): λ² / (4π² · Höhe),
-    // muss zwischen r und 3 r liegen (r: Radius der Pillenenden): zu spitz → flacher; zu flach → höher (bis 18 %), sonst schmaler.
+    // muss zwischen r und 3 r liegen (r: Radius der Pillenenden): zu spitz → flacher; zu flach → höher (bis 15 %), sonst schmaler.
     const cap = LIQ_AMP * H, q4 = 4 * Math.PI * Math.PI;
     let lamPx = L * (.4 + .4 * Math.random()), amp = Math.max(Math.min(LIQ_MIN, cap), cap * (.5 + .5 * Math.random()));
     if (lamPx * lamPx / (q4 * amp) < r) amp = lamPx * lamPx / (q4 * r);
