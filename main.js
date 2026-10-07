@@ -129,6 +129,8 @@ measure();
    Hinter der Navigation liegt ein Band aus Projekttönen (je Eintrag voll,
    über die Lücke verlaufend). Das Rechteck ist ein Ausschnitt davon und
    gleitet zum Eintrag unter der Maus, sonst zum aktiven Projekt. */
+// aria-current="true" markiert den aktiven Eintrag für Vorlese-Programme (ein leerer Wert zählt als »false«)
+const setCurrent = (a, on) => on ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current');
 let current = -2, hovered = null, peek = null, choice = null;   // choice: angeklickter Eintrag, solange die Seite noch unterwegs ist
 let aiming = false, aimFrom = null, aimEnd = 0, navLater = false;  // Zielen auf Touch (3): läuft / Plätze davor / Ende
 
@@ -209,7 +211,7 @@ function markNeighbours(c){                   // schmal: aktiver Eintrag (oder d
   links.forEach((a, j) => a.classList.toggle('far', Math.abs(j - i) > 1));   // je Seite eine Nummer, Telefon wie Tablet
 }
 // 01 ist von Anfang an aktiv (Name + Fenster + Linie) — beim Wechsel Start → 01 ändert sich nichts
-linkOf(0).setAttribute('aria-current', '');
+setCurrent(linkOf(0), true);
 markNeighbours();                               // gleich beim Laden: der Streifen startet reduziert
 links.forEach(a => a.addEventListener('pointerenter', () => { hovered = a; placeHl(); }));
 /* Klick: der Eintrag wird sofort aktiv — die Seite folgt. Sonst springt die Markierung beim
@@ -246,7 +248,7 @@ function showNav(){                              // Navigation auf das aktive Pr
     const before = aimFrom || (wOld ? navSpots() : null); aimFrom = null;   // nach dem Zielen: von den Zielplätzen aus
     // Linkseite sichtbar: »urls« bleibt aktiv; auf dem Startbildschirm bleibt 01 stehen (Name + Fenster)
     const on = activeItem();
-    links.forEach(a => a.toggleAttribute('aria-current', a === on));
+    links.forEach(a => setCurrent(a, a === on));
     markNeighbours();
     if (narrow.matches && !hadActive) hl.style.transition = 'none';
     relayout(); centerNav();
@@ -421,7 +423,7 @@ if (pagerOn) {
     const el = screenOf(links[j]);
     if (el === endPage) {                        // »urls«: sofort aktiv wie ein Projekt — nicht erst, wenn die Linkseite halb im Bild ist
       choice = endLink; aimFrom = null;
-      links.forEach(a => a.toggleAttribute('aria-current', a === endLink));
+      links.forEach(a => setCurrent(a, a === endLink));
       relayout(); centerNav(); followCentre(wOld, before);
     }
     else if (current === slideOf(links[j])) showNav(); else setActive(slideOf(links[j]), true);   // ↑: −1 → 01 aktiv
@@ -496,8 +498,8 @@ new IntersectionObserver(([en]) => {
   const wOld = narrow.matches ? windowWidth() : 0, before = wOld ? navSpots() : null;
   atEnd = en.isIntersecting;
   root.classList.toggle('at-end', atEnd);
-  endLink.toggleAttribute('aria-current', atEnd);
-  links.forEach(a => { if (a !== endLink) a.toggleAttribute('aria-current', !atEnd && a === (linkOf(current) || linkOf(0))); });
+  setCurrent(endLink, atEnd);
+  links.forEach(a => { if (a !== endLink) setCurrent(a, !atEnd && a === (linkOf(current) || linkOf(0))); });
   relayout(); centerNav();
   if (wOld) followCentre(wOld, before);
 }, { threshold:.5 }).observe(endPage);
