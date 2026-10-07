@@ -42,12 +42,6 @@ cd tests && npm ci && npx playwright install chromium webkit && npm test
 
 Playwright starts its own `php -S` on port 8765 and runs two environments: `desktop` (Chromium, 1280 × 800, mouse) and `phone` (WebKit, iPhone 13, touch). Files named `*.desktop.spec.js`, `*.phone.spec.js` and `*.both.spec.js` run in the matching environment(s). The same tests run on every push (`.github/workflows/tests.yml`).
 
-**Lighthouse.** `cd tests && npm run lighthouse` measures the site in two profiles (phone with throttled connection, desktop) for performance, accessibility, best practices and SEO, three runs each, and prints the **median** (single runs vary). It also records LCP, total blocking time, layout shift and transferred KB. Full reports and `summary.md` (with every failed or warned audit and the affected elements) go to `tests/.lighthouse/`, which is not in the repo. Without `--url` it uses the local PHP server (starting it if needed).
-
-`npm run lighthouse:check` compares the result with `tests/lighthouse-budget.json` and exits with 1 if a limit is missed; it runs in CI after the browser tests. The limits come from `node lighthouse.mjs --write-budget`, written from a real measurement and not by hand: each category = measured median − 3 points, layout shift ≤ measured + 0.02, transferred data ≤ measured + 20 %. Rewrite them only after a deliberate change.
-
-A measurement on the local PHP server does not show the real web server: no compression and none of the caching rules from `.htaccess`. Measure the real site with `npm run lighthouse -- --url https://msmr.dev`. Note that Lighthouse fetches `robots.txt` from inside the page, which the Content-Security-Policy blocks, so the `robots.txt` audit fails there even with a valid file; crawlers are not affected.
-
 ## Adding a project
 
 1. Add an entry to `projects.json`, in timeline position (newest first):

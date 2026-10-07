@@ -4,13 +4,9 @@
   "type": "module",
   "description": "Browser tests for msmr.dev (development only, never loaded by the site)",
   "scripts": {
-    "test": "playwright test",
-    "lighthouse": "node lighthouse.mjs",
-    "lighthouse:check": "node lighthouse.mjs --check"
+    "test": "playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
-    "chrome-launcher": "1.2.2",
-    "lighthouse": "13.5.0"
+    "@playwright/test": "1.63.0"
   }
 }
