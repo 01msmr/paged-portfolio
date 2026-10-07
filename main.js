@@ -939,17 +939,17 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     g.animate([{ transform:'none' }, { transform:'translateX(-100vw)' }],
               { duration:367, easing:'cubic-bezier(.55,0,.9,.35)' }).onfinish = () => g.remove();
   };
-  /* Nach 1,2 s Hover läuft 4,8 s lang eine Welle über die Oberkante der Pille: eine Kuppe in der Mitte, die Seiten sinken (Profil mit
-     Mittelwert 0 — das Volumen bleibt), die mit gleichbleibendem Tempo seitlich wandert, also nie langsamer wird oder stehenbleibt. Sie
-     wächst weich aus der Linie, schwillt und flacht wieder zur sauberen Linie ab. Mit 50 % Wahrscheinlichkeit läuft eine zweite, kleinere
-     Welle mit anderem Tempo in Gegenrichtung mit und überlagert sich (1 oder 2 Hügel). Alle Zeitkurven (Wachsen, Abklingen) und alle
-     Ortskurven (Profil, Enden) sind G3: Fenster und Profil mit verschwindender 1.–3. Ableitung, kein Überschwingen. Die Kuppe ist höchstens
-     ≈ 33 % der Pillenbreite breit, nie enger gekrümmt als die Pillenenden (Radius r); die Enden bleiben waagerecht. Die Pille bekommt oben
-     Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst. Nur mit Maus, nicht bei reduzierter Bewegung. */
+  /* Nach 1,2 s Hover läuft 4,8 s lang EINE Welle über die ganze Oberkante der Pille: kein Abschnitt mit eigenem Anfang und Ende,
+     sondern eine durchgehende, sinusförmige Welle (eine Kuppe, eine Mulde; die Kuppe höchstens ≈ 38 % der Breite), die mit
+     seitlich wandert, mit weich wechselndem Tempo (nie null) — sie steht nie still. Sie wächst weich aus der Linie, schwillt und
+     flacht wieder zur sauberen Linie ab. Mit 50 % Wahrscheinlichkeit läuft eine zweite, kleinere Welle mit anderem Tempo in Gegenrichtung
+     mit und überlagert sich. Alle Zeitkurven (Wachsen, Abklingen) und die Ortskurve an den Enden sind G3 (Fenster mit verschwindender
+     1.–3. Ableitung, kein Überschwingen); an den Pillenenden läuft die Welle nur dadurch aus. Nie enger gekrümmt als die Pillenenden
+     (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
+     Nur mit Maus, nicht bei reduzierter Bewegung. */
   const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .16;       // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: Anteil der Pillenhöhe
+  const LIQ_LAMBDA = .75, LIQ_SPEED = .038;                             // Wellenlänge (Anteil der Pillenbreite) und Grundtempo (Breiten je Sekunde; schwillt auf bis ×1,6)
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
-  // Profil einer Welle: (1−u²)⁴·(1−11u²) für |u| < 1 — Kuppe 1 in der Mitte, Nulldurchgang bei u ≈ 0,30, Seiten sinken; Integral 0; G3 an den Rändern
-  const hump = u => Math.abs(u) < 1 ? (1 - u * u) ** 4 * (1 - 11 * u * u) : 0;
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
     clearTimeout(liqTimer); cancelAnimationFrame(liqRaf); liqRaf = 0;
@@ -960,8 +960,14 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const r = Math.min(.54 * fs, W / 2), L = W - r, up = LIQ_AMP * H, base = up;                         // r: Eckenradius; L: gerade Strecke oben
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // Ecken zeichnet der Pfad selbst
     const dir = Math.random() < .5 ? -1 : 1, two = Math.random() < .5, N = LIQ_N;
-    const waves = [{ hw: .55, v: dir * .05, c0: .5 - dir * .05 * LIQ_DUR / 2, amp: 1, delay: 0 }];          // Hauptwelle: ≈ 33 % breite Kuppe, wandert ≈ 24 % der Breite
-    if (two) waves.push({ hw: .45, v: -dir * .035, c0: .5 + dir * .035 * LIQ_DUR / 2 + dir * .1, amp: .55, delay: .5 });   // zweite, kleinere, langsamer, entgegen
+    // jede Welle: cos(2π (x − c(t)) / λ) mit c(t) = Mitte + Tempo · (t − Mitte der Bewegung): Kuppe bei c, Mulden bei c ± λ/2
+    const waves = [{ lam: LIQ_LAMBDA, v: dir * LIQ_SPEED, off: 0, amp: 1, delay: 0 }];
+    if (two) waves.push({ lam: 1.05, v: -dir * LIQ_SPEED * .7, off: dir * .12, amp: .5, delay: .4 });   // zweite, kleinere, langsamer, entgegen
+    // Tempo schwillt weich an und ab (nie null, G3): Geschwindigkeit 1 + .6 · Glocke, der Weg ist ihr Integral (vorab je 1/60 s)
+    const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(LIQ_DUR * 60) + 2);
+    for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .6 * bell((i - .5) / 60 / LIQ_DUR)) / 60;
+    const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return I[i] + (I[i + 1] - I[i]) * (x - i); };
+    const norm = 1 / (1 + (two ? .5 : 0));
     const dsp = new Float32Array(N), dx = L / (N - 1), f2 = q => q.toFixed(2);
     const t0 = performance.now();
     const frame = now => {
@@ -972,10 +978,10 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
         const k = (t - w.delay) / (LIQ_DUR - w.delay);
         const env = smooth7(Math.min(k / .38, (1 - k) / .38));            // wächst, schwillt, flacht ab — G3, ohne Überschwingen
         if (env <= 0) continue;
-        const c = w.c0 + w.v * t;                                         // gleichbleibendes Tempo
-        for (let j = 0; j < N; j++) dsp[j] -= LIQ_AMP * H * w.amp * env * hump((j / (N - 1) - c) / w.hw);   // < 0: über der Oberkante
+        const c = .5 + w.off + w.v * (Iat(t) - Iat(LIQ_DUR / 2));        // Tempo wechselt weich (G3), nie null
+        for (let j = 0; j < N; j++) dsp[j] -= LIQ_AMP * H * norm * w.amp * env * Math.cos(2 * Math.PI * (j / (N - 1) - c) / w.lam);   // < 0: über der Oberkante
       }
-      for (let j = 0; j < N; j++) { const x = j / (N - 1); dsp[j] *= smooth7(Math.min(x, 1 - x) / .25); }   // Enden waagerecht, sehr sanft (G3)
+      for (let j = 0; j < N; j++) { const x = j / (N - 1); dsp[j] *= smooth7(Math.min(x, 1 - x) / .22); }   // Enden waagerecht, sehr sanft (G3)
       let kmax = 0;                                                       // nie enger gekrümmt als die Pillenenden (Radius r)
       for (let j = 1; j < N - 1; j++) { const d1 = (dsp[j + 1] - dsp[j - 1]) / (2 * dx), d2 = (dsp[j - 1] - 2 * dsp[j] + dsp[j + 1]) / (dx * dx); kmax = Math.max(kmax, Math.abs(d2) / (1 + d1 * d1) ** 1.5); }
       const cl = kmax > 1 / r ? 1 / (r * kmax) : 1;
@@ -992,8 +998,11 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     };
     liqRaf = requestAnimationFrame(frame);
   };
-  a.addEventListener('pointerenter', e => { if (calm.matches || e.pointerType !== 'mouse') return; liqEnd(); liqTimer = setTimeout(liqStart, LIQ_AFTER); });
-  a.addEventListener('pointerleave', liqEnd);
+  a.addEventListener('pointerenter', e => {
+    if (calm.matches || e.pointerType !== 'mouse' || liqRaf) return;      // läuft die Welle schon, fließt sie weiter — kein Neustart
+    clearTimeout(liqTimer); liqTimer = setTimeout(liqStart, LIQ_AFTER);
+  });
+  a.addEventListener('pointerleave', () => clearTimeout(liqTimer));      // vor dem Beginn abbrechen; eine laufende Welle läuft sauber zu Ende (EIN Fluss, kein Abbruch)
   let keyFocus = false;                       // Pille per Tastatur sichtbar?
   a.addEventListener('pointerleave', leave);
   a.addEventListener('focus', () => { keyFocus = a.matches(':focus-visible'); });
