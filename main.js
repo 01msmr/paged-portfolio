@@ -947,9 +947,11 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      1.–3. Ableitung, kein Überschwingen); an den Pillenenden läuft die Welle nur dadurch aus. Nie enger gekrümmt als die Pillenenden
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .15, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 15 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
+  const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .15, LIQ_MIN = 7;   // Mittelwerte: Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 15 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
   const LIQ_TRAVEL = 1.5;                                               // zurückgelegter Weg (Pillenbreiten): 1,5 × so lang bei gleichem Tempo
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
+  // Zufall mit Glockenkurve (Normalverteilung, auf [lo, hi] begrenzt): Werte um den Mittelwert sind häufig, extreme selten
+  const randN = (mean, sd, lo, hi) => { let v; do v = mean + sd * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random()); while (v < lo || v > hi); return v; };
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
     clearTimeout(liqTimer); cancelAnimationFrame(liqRaf); liqRaf = 0;
@@ -961,27 +963,28 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     // Höhe und Breite der Welle sind zufällig: die Wellenlänge λ liegt zwischen 40 % und 80 % der Pillenbreite (Kuppe λ/2 ≤ 40 %), die
     // Höhe zwischen 50 % und 100 % von LIQ_AMP · Pillenhöhe (15 %). Der Krümmungsradius der Kuppe, cos(2π (x − c(t)) / λ): λ² / (4π² · Höhe),
     // muss zwischen r und 3 r liegen (r: Radius der Pillenenden): zu spitz → flacher; zu flach → höher (bis 15 %), sonst schmaler.
+    const dur = randN(LIQ_DUR, .7, LIQ_DUR - 1.4, LIQ_DUR + 1.4);                                       // Dauer der Bewegung, glockenförmig um 7,2 s
     const cap = LIQ_AMP * H, q4 = 4 * Math.PI * Math.PI;
     // Zufällig je Bewegung: Zahl der Wellen (1–3 Kuppen auf dem geraden Stück), Höhe, Tempo und Richtung
-    const nWaves = 1 + Math.floor(Math.random() * 3), rMin = nWaves > 1 ? r / 2 : r;                   // mehrere Kuppen dürfen etwas enger sein
-    let lamPx = (L - r) * .9 / nWaves * (.92 + .16 * Math.random()), amp = Math.max(Math.min(LIQ_MIN, cap), cap * (.4 + .6 * Math.random()));
+    const nWaves = Math.min(3, Math.max(1, Math.round(randN(2, .65, .5, 3.5)))), rMin = nWaves > 1 ? r / 2 : r;   // Zahl der Kuppen 1–3, am häufigsten 2                   // mehrere Kuppen dürfen etwas enger sein
+    let lamPx = (L - r) * .9 / nWaves * (.92 + .16 * Math.random()), amp = Math.max(Math.min(LIQ_MIN, cap), cap * randN(.72, .16, .4, 1));
     if (lamPx * lamPx / (q4 * amp) < rMin) amp = lamPx * lamPx / (q4 * rMin);
     else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
     const lam = lamPx / L, up = amp, base = up;
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // oben Luft für die Welle; Ecken zeichnet der Pfad selbst
     const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1, ph1 = Math.random() * 6.3, ph2 = Math.random() * 6.3;
-    const travel = LIQ_TRAVEL * (.6 + .8 * Math.random());              // zufälliges Tempo: zurückgelegter Weg 0,6–1,4 × (gleiche Dauer)
+    const travel = LIQ_TRAVEL * randN(1, .2, .6, 1.4);                  // zufälliges Tempo: zurückgelegter Weg 0,6–1,4 ×, meist um 1
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
-    const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(LIQ_DUR * 60) + 2);
-    for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .7 * bell((i - .5) / 60 / LIQ_DUR)) / 60;
+    const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(dur * 60) + 2);
+    for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .7 * bell((i - .5) / 60 / dur)) / 60;
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
     const dsp = new Float32Array(N), T = Math.max(.12 * L, Math.min(.25 * L, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
     const t0 = performance.now();
     const frame = now => {
       const t = (now - t0) / 1000;
-      if (t >= LIQ_DUR) { liqEnd(); return; }                             // Ende nach 7,2 s Bewegung: saubere Linie
-      const gate = smooth7(Math.min(t, LIQ_DUR - t) / (LIQ_DUR / 2));      // wächst bis zur Mitte und geht genauso wieder: das Gehen ist das Spiegelbild des Kommens — G3, nie plötzlich weg
+      if (t >= dur) { liqEnd(); return; }                                 // Ende der Bewegung: saubere Linie
+      const gate = smooth7(Math.min(t, dur - t) / (dur / 2));      // wächst bis zur Mitte und geht genauso wieder: das Gehen ist das Spiegelbild des Kommens — G3, nie plötzlich weg
       // seitliche Bewegung: klar sichtbar (zufälliger Weg) mit leicht zufälligem Wiegen
       const c = .5 + dir * travel * (Iat(t) - .5) + .022 * Math.sin(1.7 * t + ph1) + .015 * Math.sin(3.1 * t + ph2);
       for (let j = 0; j < N; j++) dsp[j] = -amp * gate * Math.cos(2 * Math.PI * (j / (N - 1) - c) / lam);   // < 0: über der Oberkante
@@ -1003,7 +1006,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
   };
   a.addEventListener('pointerenter', e => {
     if (calm.matches || e.pointerType !== 'mouse' || liqRaf) return;      // läuft die Welle schon, fließt sie weiter — kein Neustart
-    clearTimeout(liqTimer); liqTimer = setTimeout(liqStart, LIQ_AFTER);
+    clearTimeout(liqTimer); liqTimer = setTimeout(liqStart, randN(LIQ_AFTER, 150, LIQ_AFTER - 300, LIQ_AFTER + 300));   // Beginn glockenförmig um 1,2 s
   });
   a.addEventListener('pointerleave', () => clearTimeout(liqTimer));      // vor dem Beginn abbrechen; eine laufende Welle läuft sauber zu Ende (EIN Fluss, kein Abbruch)
   let keyFocus = false;                       // Pille per Tastatur sichtbar?
