@@ -984,7 +984,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const pk = randN(.2, .12, 0, .45);   // wie viel schneller die Mitte ist als Anfang/Ende (0 = durchgehend gleich)
     for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + pk * bell((i - .5) / 60 / dur)) / 60;
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
-    const dsp = new Float32Array(N), T = Math.min((L - r) / 2, Math.max(Math.sqrt(6 * amp * r), .04 * L, Math.min(.08 * L, .15 * lamPx, (L - r) / 3))), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
+    const dsp = new Float32Array(N), T = Math.max(.12 * L, Math.min(.25 * L, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
     const t0 = performance.now();
     const frame = now => {
       const t = (now - t0) / 1000;
