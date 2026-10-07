@@ -731,7 +731,9 @@ if (pagerOn) {
 document.addEventListener('click', ev => {
   const a = ev.target.closest('a[href^="#"]');
   if (!a || ev.defaultPrevented) return;
-  const t = document.querySelector(a.getAttribute('href'));
+  let id = a.getAttribute('href').slice(1);       // getElementById statt querySelector: Kennungen mit Ziffer/Punkt (3d-viz, v1.2) und href="#" lösen keinen Fehler aus
+  try { id = decodeURIComponent(id); } catch (e) { return; }   // kaputte %-Folge: der Browser macht es wie gewohnt
+  const t = id && document.getElementById(id);
   if (!t) return;
   ev.preventDefault();
   if (screens.includes(t)) jumpTo(screens.indexOf(t));    // Bildschirm (Start, Projekt, Linkseite): höchstens eine Karte Weg sichtbar
