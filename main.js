@@ -1006,7 +1006,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
   };
   a.addEventListener('pointerenter', e => {
     if (calm.matches || e.pointerType !== 'mouse' || liqRaf) return;      // läuft die Welle schon, fließt sie weiter — kein Neustart
-    clearTimeout(liqTimer); liqTimer = setTimeout(liqStart, randN(LIQ_AFTER, 150, LIQ_AFTER - 300, LIQ_AFTER + 300));   // Beginn glockenförmig um 1,2 s
+    clearTimeout(liqTimer); liqTimer = setTimeout(liqStart, randN(LIQ_AFTER, 40, LIQ_AFTER - 100, LIQ_AFTER + 100));    // Beginn: fast fest, nur ±0,1 s glockenförmig um 1,2 s
   });
   a.addEventListener('pointerleave', () => clearTimeout(liqTimer));      // vor dem Beginn abbrechen; eine laufende Welle läuft sauber zu Ende (EIN Fluss, kein Abbruch)
   let keyFocus = false;                       // Pille per Tastatur sichtbar?
