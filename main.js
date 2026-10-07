@@ -965,6 +965,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     if (lamPx * lamPx / (q4 * amp) < r) amp = lamPx * lamPx / (q4 * r);
     else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
     const lam = lamPx / L, up = amp, base = up;
+    a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // oben Luft für die Welle; Ecken zeichnet der Pfad selbst
     // Wellenpaket mit 1 bis 3 Kuppen (so viele, wie auf das gerade Stück passen): halbe Breite hwP (Anteil der Pillenbreite). Die äußersten Lappen
     // sind Kuppen, nie Mulden (bei gerader Kuppenzahl liegt in der Mitte eine Mulde) — die Linie sackt nie zuerst ab. Das Paket beginnt, wandert und
     // endet ganz innerhalb des geraden Stücks zwischen den Endkappen [r, L]: sein Mittelpunkt bleibt dort, mit Abstand zum Rand.
@@ -1003,7 +1004,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
       a.style.setProperty('--liq', `path("${d}")`);
       liqRaf = requestAnimationFrame(frame);
     };
-    liqRaf = requestAnimationFrame(frame);
+    frame(t0);                                                          // erste (gerade) Form sofort, im selben Augenblick wie --liq-up und --liq-r: kein Bild ohne Beschnitt, kein Sprung der Oberkante
   };
   a.addEventListener('pointerenter', e => {
     if (calm.matches || e.pointerType !== 'mouse' || liqRaf) return;      // läuft die Welle schon, fließt sie weiter — kein Neustart
