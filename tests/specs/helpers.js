@@ -6,16 +6,9 @@ export const projects = JSON.parse(fs.readFileSync(new URL('../../projects.json'
 
 /** Seite laden und warten, bis main.js den Anfangszustand gesetzt hat (01 ist aktiv). */
 export async function open(page, hash = '') {
-  await page.addInitScript(() => {            // Verstöße gegen die Sicherheitsrichtlinie mitschneiden
-    window.__csp = [];
-    document.addEventListener('securitypolicyviolation', e => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`), true);
-  });
   await page.goto('/' + hash);
   await expect(page.locator('.nav a[aria-current="true"]')).toHaveCount(1, { timeout: 3000 });
   await page.evaluate(() => document.fonts.ready);
-  // main.js ignoriert Rad und Klicks auf die Navigation in den ersten ~500 ms nach dem Laden (Zeitstempel starten bei 0,
-  // gemessen an performance.now()): erst danach beginnen — nicht mit fester Pause, sondern bis die Seite alt genug ist
-  await page.waitForFunction(() => performance.now() > 700);
 }
 
 /** Oberkanten der Bildschirme: Start, Projekte, Linkseite. */

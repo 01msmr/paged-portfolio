@@ -132,7 +132,7 @@ measure();
 // aria-current="true" markiert den aktiven Eintrag für Vorlese-Programme (ein leerer Wert zählt als »false«)
 const setCurrent = (a, on) => on ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current');
 let current = -2, hovered = null, peek = null, choice = null;   // choice: angeklickter Eintrag, solange die Seite noch unterwegs ist
-let aiming = false, aimFrom = null, aimEnd = 0, navLater = false;  // Zielen auf Touch (3): läuft / Plätze davor / Ende
+let aiming = false, aimFrom = null, aimEnd = -1e9, navLater = false;  // Zielen auf Touch (3): läuft / Plätze davor / Ende
 
 const box = a => {                           // genaue Lage eines Eintrags im Band (Bruchteile von Pixeln) — sein Ruheplatz:
   const n = hl.getBoundingClientRect(), r = a.getBoundingClientRect();   // ein laufendes Gleiten (transform) zählt nicht,
@@ -508,7 +508,7 @@ new IntersectionObserver(([en]) => {
    Eine Geste = eine Karte. Der Bildlauf übernimmt das Tempo der Geste (wie das Wischen auf dem
    Telefon): ease-out cubic mit T = 3·Weg / Tempo, weich auf die Kartenkante — 0,3 bis 0,65 s,
    Start ↔ 01 bis 1,05 s (die Wortmarke braucht Zeit für ihren Bogen). Nachschwung wird geschluckt. */
-let gliding = false, lastWheel = 0;
+let gliding = false, lastWheel = -1e9;       // -1e9: noch nie — sonst ignoriert die Seite Rad und Klicks in den ersten 180–400 ms nach dem Laden
 const easeOutC = k => 1 - (1 - k) ** 3;
 /* Touch: die Füllung der Zielkarte beginnt 0,33 s vor dem Ende des Gleitens (Flüssigkeit, 7) */
 const FILL_AHEAD = 330;
