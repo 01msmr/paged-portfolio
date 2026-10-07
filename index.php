@@ -2,14 +2,13 @@
 /* msmr.dev — die Seite wird aus projects.json gebaut (eine Quelle für Karten, Navigation,
    Linkseite, Zähler und Icons). Kein Build-Schritt: der Server rendert bei jedem Aufruf. */
 
-// Sicherheits-Kopfzeilen (vor jeder Ausgabe). Alles kommt von der eigenen Adresse; Skripte stehen nie im Seitentext.
-// style-src 'unsafe-inline': die Elemente tragen Stilangaben direkt (style="--hl:…" je Projekt) und main.js setzt Stile per Skript.
-header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
+// Sicherheits-Kopfzeilen (vor jeder Ausgabe). Bewusst ohne Content-Security-Policy.
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
 
-$projects = json_decode(file_get_contents(__DIR__ . '/projects.json'), true, 512, JSON_THROW_ON_ERROR);   // kaputtes JSON: lauter Fehler statt count(null)
+$projects = json_decode(file_get_contents(__DIR__ . '/projects.json'), true);
+if (!is_array($projects) || !$projects) throw new RuntimeException('projects.json ist kaputt: ' . json_last_error_msg());   // lauter Fehler statt count(null); läuft auf jeder PHP-Version
 $n = count($projects);
 
 function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
@@ -62,7 +61,7 @@ $icon = random_int(0, $n - 1);               // Icon in einer der Projektfarben 
   <nav class="nav" aria-label="Projects">
     <i class="nav__hl" aria-hidden="true"></i><i class="nav__under" aria-hidden="true"></i>   <!-- Fenster (folgt der Maus) · Linie unter dem aktiven Eintrag (bleibt) — beide Ausschnitte desselben Farbbands -->
     <span class="nav-pad" aria-hidden="true">00</span>   <!-- unsichtbarer Platzhalter (Telefon): links vom ersten Eintrag steht immer ein Nachbar -->
-<a href="#top" class="nav-start" style="--hl:var(--end-fill)"><b>↑</b><span>start</span></a>   <!-- nur Ziel (Zielen, Tippen): der Startbildschirm; dort bleibt 01 aktiv -->
+<a href="#top" class="nav-start" aria-label="start" style="--hl:var(--end-fill)"><b>↑</b><span>start</span></a>   <!-- nur Ziel (Zielen, Tippen): der Startbildschirm; dort bleibt 01 aktiv -->
 <?php foreach ($projects as $i => $p): ?>
     <a href="#<?= e($p['id']) ?>" style="--hl:<?= color($p) ?>"><b><?= two($n - $i) ?></b><span><?= e($p['name']) ?></span></a>
 <?php endforeach; ?>
