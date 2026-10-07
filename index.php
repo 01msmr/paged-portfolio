@@ -2,7 +2,7 @@
 /* msmr.dev — die Seite wird aus projects.json gebaut (eine Quelle für Karten, Navigation,
    Linkseite, Zähler und Icons). Kein Build-Schritt: der Server rendert bei jedem Aufruf. */
 
-$projects = json_decode(file_get_contents(__DIR__ . '/projects.json'), true);
+$projects = json_decode(file_get_contents(__DIR__ . '/projects.json'), true, 512, JSON_THROW_ON_ERROR);   // kaputtes JSON: lauter Fehler statt count(null)
 $n = count($projects);
 
 function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }

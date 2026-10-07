@@ -4,7 +4,7 @@ header('Content-Type: application/manifest+json');
 header('Cache-Control: no-store');
 // Dateien mit Änderungszeit als Version (wie asset() in index.php): die Icons sind ein Jahr gültig, nach tools/icons.py kommen die neuen sofort
 function asset($file) { return $file . '?v=' . filemtime(__DIR__ . '/' . $file); }
-$n = random_int(0, count(json_decode(file_get_contents(__DIR__ . '/projects.json'), true)) - 1);
+$n = random_int(0, count(json_decode(file_get_contents(__DIR__ . '/projects.json'), true, 512, JSON_THROW_ON_ERROR)) - 1);
 echo json_encode([
   'name'             => 'msmr.dev',
   'short_name'       => 'msmr',

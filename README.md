@@ -28,7 +28,7 @@ This needs PHP (`brew install php`). The built-in server runs the page exactly a
 
 ## Deployment
 
-Push to `main`. A GitHub webhook tells the netcup server to pull.
+Push to `main`. A GitHub webhook tells the netcup server to pull. `bash tools/check.sh` (PHP and JS syntax, `projects.json`, one icon set per project, colour rule) runs locally and automatically on every push (`.github/workflows/validate.yml`); a broken `projects.json` also makes `index.php` fail loudly instead of rendering half a page.
 
 `style.css` and `main.js` are linked with their modification time (`?v=…`), so browsers cache them for a year and still load a new version right after a change. The page itself is always fetched fresh.
 
