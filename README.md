@@ -69,7 +69,7 @@ Playwright starts its own `php -S` on port 8765 and runs two environments: `desk
    python3 tools/colors.py fix <id>   # nearest valid colour for a project that breaks the rule
    ```
 
-2. Regenerate the icons so there is one per project colour: `python3 tools/icons.py`.
+2. Regenerate the icons so there is one per project colour: `python3 tools/icons.py` (this also writes `app-icons/favicon.ico`, which `.htaccess` serves for requests to `/favicon.ico`, so the host's default icon never shows).
 3. Image (optional): save a screenshot, about 1600 px wide, as WebP:
 
    ```sh

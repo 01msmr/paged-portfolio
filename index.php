@@ -40,7 +40,7 @@ $icon = random_int(0, $n - 1);               // Icon in einer der Projektfarben 
 <meta property="og:image" content="<?= e('https://msmr.dev/' . asset('img/og.png')) ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="msmr.dev: web &amp; more.">
+<meta property="og:image:alt" content="msmr.dev: the a.msmr project card, filling with yellow like a liquid">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://msmr.dev/">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">

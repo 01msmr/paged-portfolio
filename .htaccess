@@ -16,6 +16,13 @@
   </FilesMatch>
 </IfModule>
 
+# /favicon.ico (Crawler, Link-Vorschauen, Lesezeichen, Safari) liefert das eigene Icon; der Hoster legt sonst sein Standard-Icon dorthin.
+# Die Datei entsteht mit tools/icons.py (Farbe des ersten Projekts); die Seite selbst nennt ihre Icons mit ?v= (index.php).
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^favicon\.ico$ app-icons/favicon.ico [L]
+</IfModule>
+
 <IfModule mod_headers.c>
   # Gilt auch für Bilder, Schrift und Skripte (die übrigen Sicherheits-Kopfzeilen setzt index.php)
   Header always set X-Content-Type-Options "nosniff"
