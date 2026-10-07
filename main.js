@@ -972,13 +972,13 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(LIQ_DUR * 60) + 2);
     for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .7 * bell((i - .5) / 60 / LIQ_DUR)) / 60;
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
-    const peakAt = .48 + (Math.random() - .5) * .06;                      // Höhepunkt knapp vor/hinter der Mitte: fast symmetrisch, nicht identisch
+    const peakAt = .44 + (Math.random() - .5) * .06;                      // Höhepunkt etwas vor der Mitte: das Gehen dauert etwas länger als das Kommen
     const dsp = new Float32Array(N), f2 = q => q.toFixed(2);
     const t0 = performance.now();
     const frame = now => {
       const t = (now - t0) / 1000;
       if (t >= LIQ_DUR) { liqEnd(); return; }                             // Ende nach 4,8 s Bewegung: saubere Linie
-      const gate = smooth7(Math.min(t / (peakAt * LIQ_DUR), (LIQ_DUR - t) / ((1 - peakAt) * LIQ_DUR)));   // Höhe wächst bis zur Mitte, dann spiegelbildlich (fast symmetrisch) zurück — G3, nie plötzlich weg
+      const gate = t < peakAt * LIQ_DUR ? smooth7(t / (peakAt * LIQ_DUR)) : smooth7((LIQ_DUR - t) / ((1 - peakAt) * LIQ_DUR)) ** 1.5;   // wächst bis zur Mitte, geht fast spiegelbildlich zurück, nur weicher und etwas länger (Potenz 1,5: lang auslaufender Schwanz) — G3, nie plötzlich weg
       // seitliche Bewegung: klar sichtbar (LIQ_TRAVEL Breiten) mit leicht zufälligem Wiegen
       const c = .5 + dir * LIQ_TRAVEL * (Iat(t) - .5) + .022 * Math.sin(1.7 * t + ph1) + .015 * Math.sin(3.1 * t + ph2);
       for (let j = 0; j < N; j++) dsp[j] = -amp * gate * Math.cos(2 * Math.PI * (j / (N - 1) - c) / lam);   // < 0: über der Oberkante
