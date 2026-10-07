@@ -939,23 +939,67 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     g.animate([{ transform:'none' }, { transform:'translateX(-100vw)' }],
               { duration:367, easing:'cubic-bezier(.55,0,.9,.35)' }).onfinish = () => g.remove();
   };
-  /* Nach 1,5 s Hover wird die Oberkante der Pille flüssig: sie wogt nach unten in die Pille hinein (CSS clip-path über --liq).
-     Die beiden Enden links und rechts bleiben waagerecht auf der Oberkante, und die Kurve läuft dort mit stetiger Krümmung
-     hinein (G3: Fenster mit verschwindender 1.–3. Ableitung), auch beim Einblenden. Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1500, LIQ_N = 80, LIQ_DEPTH = 13, LIQ_RAMP = 1.1;   // Tiefe: % der Pillenhöhe; Anlauf in Sekunden
+  /* Nach 1,5 s Hover wird die Oberkante der Pille flüssig — nur teilweise und nur zeitweise: in zufälligen Abständen hebt oder
+     senkt sich ein einzelner Abschnitt (16–30 % der Breite) zu einer runden, spitzen Kuppe über bzw. Mulde unter die waagerechte
+     Mittellinie (die Oberkante) — zufällig oben oder unten, nie zwei Abschnitte direkt nebeneinander. Die Pille bekommt dafür oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, in px), mit denselben Ecken wie
+     sonst. Kuppen und Mulden sind nie enger als die Pillenenden (Krümmungsradius ≥ r). Jeder Abschnitt läuft räumlich und zeitlich mit stetiger Krümmung aus (G3: cos⁴-Profil, Fenster mit verschwindender
+     1.–3. Ableitung); die Pillenenden links und rechts bleiben waagerecht. Nur mit Maus, nicht bei reduzierter Bewegung. */
+  const LIQ_AFTER = 1500, LIQ_N = 140, LIQ_AMP = .15;                  // Höhe über und Tiefe unter der Mittellinie: Anteil der Pillenhöhe
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
-  const liqEnd = () => { clearTimeout(liqTimer); cancelAnimationFrame(liqRaf); liqRaf = 0; a.style.removeProperty('--liq'); };
+  const liqEnd = () => {
+    clearTimeout(liqTimer); cancelAnimationFrame(liqRaf); liqRaf = 0;
+    ['--liq', '--liq-up', '--liq-r'].forEach(n => a.style.removeProperty(n));
+  };
   const liqStart = () => {
-    const t0 = performance.now(), ph = Math.random() * 6.3;
+    const fs = parseFloat(getComputedStyle(a).fontSize), W = a.clientWidth, H = a.clientHeight + .06 * fs;   // Pille: .02em über, .04em unter dem Link
+    const r = Math.min(.54 * fs, W / 2), L = W - r, up = LIQ_AMP * H, base = up;                         // r: Eckenradius; L: gerade Strecke oben
+    a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // Ecken zeichnet der Pfad selbst
+    const t0 = performance.now(); let next = .15, waves = [];
     const frame = now => {
-      const t = (now - t0) / 1000, ramp = smooth7(t / LIQ_RAMP), pts = [];
-      for (let i = 0; i <= LIQ_N; i++) {
-        const x = i / LIQ_N, win = smooth7(Math.min(x, 1 - x) / .3);        // 0 an beiden Enden, sehr weich
-        const n = .5 + .5 * (.78 * Math.sin(4.4 * x - 1.1 * t + ph) + .22 * Math.sin(8.8 * x + 1.5 * t + ph * 1.7));   // breite, runde Wogen
-        pts.push(`${(x * 100).toFixed(2)}% ${(LIQ_DEPTH * ramp * win * n).toFixed(3)}%`);
+      const t = (now - t0) / 1000;
+      if (t >= next) {                                                  // in zufälligen Abständen, nicht jedes Mal
+        next = t + .8 + Math.random() * 1.4;
+        if (Math.random() < .85) {
+          for (let tries = 0; tries < 6; tries++) {                    // nie direkt neben einem anderen Abschnitt
+            const hw = .08 + .07 * Math.random();                      // halbe Breite (Anteil von L): 16 %–30 % der Breite, nicht winzig
+            const c = .03 + hw + Math.random() * (.94 - 2 * hw);
+            if (waves.some(w => Math.abs(c - w.c) < w.hw + hw + .1)) continue;
+            waves.push({ c, hw, t0: t, dur: 1.5 + Math.random() * 1.5, ph: Math.random() * 6.3,
+                         a: (Math.random() < .5 ? -1 : 1) * LIQ_AMP * (.85 + .15 * Math.random()) });   // zufällig über oder unter der Mittellinie
+            break;
+          }
+        }
       }
-      a.style.setProperty('--liq', `polygon(${pts.join(',')},100% 100%,0 100%)`);
+      waves = waves.filter(w => t < w.t0 + w.dur);
+      const rise = new Float32Array(LIQ_N + 1);                          // rise > 0: über die Oberkante hinaus (px)
+      for (let i = 1; i < LIQ_N; i++) {
+        const x = i / LIQ_N;
+        for (const w of waves) {
+          const u = (x - w.c - .02 * Math.sin(1.3 * t + w.ph)) / w.hw;   // Abschnitt schwankt leicht seitlich
+          if (Math.abs(u) >= 1) continue;
+          const k = (t - w.t0) / w.dur, env = smooth7(Math.min(k, 1 - k) * 3);     // weich ein- und ausblenden
+          rise[i] += w.a * H * env * Math.cos(Math.PI * u / 2) ** 4;   // eine runde, spitze Kuppe (a > 0) oder Mulde (a < 0)
+        }
+      }
+      // Kuppen und Mulden nie enger als die Pillenenden (Radius r): wo die Krümmung 1/r überschritten würde, wird die Welle flacher
+      const dx = L / LIQ_N;
+      for (let pass = 0; pass < 2; pass++) {
+        let kmax = 0;
+        for (let i = 1; i < LIQ_N; i++) {
+          const d1 = (rise[i + 1] - rise[i - 1]) / (2 * dx), d2 = (rise[i - 1] - 2 * rise[i] + rise[i + 1]) / (dx * dx);
+          kmax = Math.max(kmax, Math.abs(d2) / (1 + d1 * d1) ** 1.5);
+        }
+        if (kmax <= 1 / r) break;
+        const f = 1 / (r * kmax);
+        for (let i = 0; i <= LIQ_N; i++) rise[i] *= f;
+      }
+      let d = `M0 ${base.toFixed(2)}`;
+      for (let i = 1; i <= LIQ_N; i++) d += `L${(i / LIQ_N * L).toFixed(2)} ${(base - rise[i]).toFixed(2)}`;
+      d += `A${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 ${W.toFixed(2)} ${(base + r).toFixed(2)}`
+         + `L${W.toFixed(2)} ${(base + H - r).toFixed(2)}A${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 ${L.toFixed(2)} ${(base + H).toFixed(2)}`
+         + `L${r.toFixed(2)} ${(base + H).toFixed(2)}A${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 0 ${(base + H - r).toFixed(2)}Z`;
+      a.style.setProperty('--liq', `path("${d}")`);
       liqRaf = requestAnimationFrame(frame);
     };
     liqRaf = requestAnimationFrame(frame);

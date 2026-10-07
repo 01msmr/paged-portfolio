@@ -403,7 +403,9 @@ a:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2p
   content:"";position:absolute;z-index:-1;border-radius:0 .54em .54em .54em;background:var(--pill);
 }
 :is(.title,.links) a::before{
-  clip-path:var(--liq,none);                               /* Oberkante wird nach 1,5 s Hover flüssig (main.js 6) */
+  clip-path:var(--liq,none);                               /* Oberkante wird nach 1,5 s Hover zeitweise flüssig (main.js 6): … */
+  margin-top:calc(-1 * var(--liq-up,0px));                 /* … oben Luft, damit sie auch über die Oberkante steigen kann */
+  border-radius:var(--liq-r,0 .54em .54em .54em);          /* … dann zeichnet der Pfad die Ecken selbst */
   inset:.1em .3em .08em;opacity:0;                        /* Ruhe: Textgröße, unsichtbar — ohne Übergang */
 }
 /* Verlassen: eine Kopie der Pille fährt nach links aus dem Bild (JS), die echte ist sofort weg.
