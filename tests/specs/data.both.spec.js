@@ -11,6 +11,13 @@ for (const p of projects) {
   });
 }
 
+test('Alle Projekt-Adressen sind https', async () => {
+  for (const p of projects) {
+    expect(p.url, p.id).toMatch(/^https:\/\//);
+    for (const t of p.title) if (t.url) expect(t.url, `${p.id}: ${t.label}`).toMatch(/^https:\/\//);
+  }
+});
+
 test('Externe Links: target=_blank + noopener, Links auf msmr.dev ohne target', async ({ page }) => {
   await open(page);
   const all = await page.locator('a[href^="http"]').evaluateAll(l => l.map(a => ({ href: a.href, target: a.getAttribute('target'), rel: a.getAttribute('rel') })));
