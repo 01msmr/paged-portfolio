@@ -976,7 +976,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const lam = lamPx / L, up = amp, base = up;
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // oben Luft für die Welle; Ecken zeichnet der Pfad selbst
     const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1;
-    const travel = LIQ_TRAVEL * randN(1, .45, .1, 1.9);                 // zufälliges Tempo: zurückgelegter Weg 0,1–1,9 × (auch sehr langsam), meist um 1 — deutlich unterschiedlich
+    const travel = LIQ_TRAVEL * randN(1, .45, .1, 1.9) * (.5 * W + .5 * 6 * fs) / W;   // Weg zur Hälfte unabhängig von der Länge: lange Pillen werden höchstens 50 % schneller (px/s), kurze nur wenig langsamer                 // zufälliges Tempo: zurückgelegter Weg 0,1–1,9 × (auch sehr langsam), meist um 1 — deutlich unterschiedlich
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(dur * 60) + 2);
