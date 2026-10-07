@@ -947,7 +947,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      1.–3. Ableitung, kein Überschwingen); an den Pillenenden läuft die Welle nur dadurch aus. Nie enger gekrümmt als die Pillenenden
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .12, LIQ_MIN = 7;   // Mittelwerte: Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 12 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
+  const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .12;   // Mittelwerte: Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 12 % der Pillenhöhe
   const LIQ_TRAVEL = 1.2;                                               // mittlerer zurückgelegter Weg (Pillenbreiten) — 20 % langsamer als zuvor (1,5); die zufällige Streuung (0,5–1,9 ×) bleibt
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   // Zufall mit Glockenkurve (Normalverteilung, auf [lo, hi] begrenzt): Werte um den Mittelwert sind häufig, extreme selten
@@ -966,9 +966,12 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const dur = randN(LIQ_DUR, .7, LIQ_DUR - 1.4, LIQ_DUR + 1.4);                                       // Dauer der Bewegung, glockenförmig um 7,2 s
     const cap = LIQ_AMP * H, q4 = 4 * Math.PI * Math.PI;
     // Zufällig je Bewegung: Zahl der Wellen (1–3 Kuppen auf dem geraden Stück), Höhe, Tempo und Richtung
-    const nWaves = Math.min(3, Math.max(1, Math.round(randN(2, .95, .5, 3.5)))), rMin = nWaves > 1 ? r / 2 : r;   // Zahl der Kuppen 1–3, etwas häufiger 2                   // mehrere Kuppen dürfen etwas enger sein
-    let lamPx = (L - r) * .9 / nWaves * (.92 + .16 * Math.random()), amp = Math.max(Math.min(LIQ_MIN, cap), cap * randN(.72, .16, .4, 1));
-    if (lamPx * lamPx / (q4 * amp) < rMin) amp = lamPx * lamPx / (q4 * rMin);
+    const nWaves = Math.min(3, Math.max(1, Math.round(randN(2, .95, .5, 3.5))));   // Zahl der Kuppen 1–3, etwas häufiger 2
+    let amp = cap * randN(.72, .16, .4, 1), lamPx = (L - r) * .9 / nWaves * (.92 + .16 * Math.random());   // Höhe zufällig (auch bei kleinen Pillen), Wellenlänge für nWaves Kuppen
+    // Krümmungsradius der Kuppe R = λ² / (4π² · Höhe): nie kleiner als der Radius r der Pillenenden (mindestens so groß — nicht „gleich“), höchstens 3 r
+    const lamMin = Math.sqrt(q4 * amp * r), lamFit = .9 * (L - r);
+    if (lamPx < lamMin) lamPx = Math.min(lamFit, lamMin * (1 + .35 * Math.random()));                      // zu eng → weniger, weitere Kuppen (zufällig weiter als nötig)
+    if (lamPx * lamPx / (q4 * amp) < r) amp = lamPx * lamPx / (q4 * r);                                     // nur wenn nicht einmal eine Kuppe so weit passt: flacher
     else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
     const lam = lamPx / L, up = amp, base = up;
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // oben Luft für die Welle; Ecken zeichnet der Pfad selbst
@@ -977,7 +980,9 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(dur * 60) + 2);
-    for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + .7 * bell((i - .5) / 60 / dur)) / 60;
+    // dazu schwankt das Seitentempo innerhalb der Bewegung zufällig (zwei langsame Schwingungen, glockenförmig verteilte Stärke; nie unter ×0,35)
+    const m1 = randN(.3, .1, .1, .5), m2 = randN(.15, .05, .05, .25), g1 = .12 + .13 * Math.random(), g2 = .3 + .2 * Math.random(), q1 = Math.random() * 6.3, q2 = Math.random() * 6.3;
+    for (let i = 1; i < I.length; i++) { const tt = (i - .5) / 60; I[i] = I[i - 1] + (1 + .7 * bell(tt / dur)) * Math.max(.35, 1 + m1 * Math.sin(2 * Math.PI * g1 * tt + q1) + m2 * Math.sin(2 * Math.PI * g2 * tt + q2)) / 60; }
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
     const dsp = new Float32Array(N), T = Math.max(.12 * L, Math.min(.25 * L, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
     const t0 = performance.now();
