@@ -118,7 +118,7 @@ The line under a card's title starts exactly below the title's first letter (mea
 - Colours follow the system's light or dark mode; in light mode page and bar are pure white.
 - On desktop the nav type is 1.8× larger (`--fs-s`) and all text inside the cards — titles (also on the links page), tech details at rest, the line under a title — 1.4× (`--fs-c`, both in `style.css`); an enlarged detail and the big numbers keep their size.
 - Right after the page has loaded, all screenshots are fetched and their halftones drawn one after another, so fast scrolling never meets an unloaded card. Fonts come from this site, not from Google.
-- Each card's screenshot is also its background: always faintly visible (5 %), growing linearly to 33 % over 6 s once the pointer, touch and scrolling have been still for 1.5 s, and back to 5 % within 0.25 s on any activity (`.rest-img`, `main.js` “Ruhebild”). Click/tap still shows the halftone and the full image.
+- Each card's screenshot is also its background: always faintly visible (3 %), growing linearly to 33 % over 6 s once the pointer, touch and scrolling have been still for 1.5 s, and back to 3 % within 0.25 s on any activity (`.rest-img`, `main.js` “Ruhebild”). Click/tap still shows the halftone and the full image.
 - On touch devices there is no text selection, loupe or grey tap flash, so holding and tapping stay with the page's own gestures. Pinch zoom stays, and project links keep their long-press menu.
 - Motion respects `prefers-reduced-motion`: pages jump instead of gliding, cards fill plainly instead of as a liquid, and the cursor has no trail.
 - Without JavaScript the page still reads top to bottom, with a small static wordmark.
