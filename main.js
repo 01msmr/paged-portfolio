@@ -984,7 +984,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const m1 = randN(.3, .1, .1, .5), m2 = randN(.15, .05, .05, .25), g1 = .12 + .13 * Math.random(), g2 = .3 + .2 * Math.random(), q1 = Math.random() * 6.3, q2 = Math.random() * 6.3;
     for (let i = 1; i < I.length; i++) { const tt = (i - .5) / 60; I[i] = I[i - 1] + (1 + .7 * bell(tt / dur)) * Math.max(.06, 1 + m1 * Math.sin(2 * Math.PI * g1 * tt + q1) + m2 * Math.sin(2 * Math.PI * g2 * tt + q2)) / 60; }
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
-    const dsp = new Float32Array(N), T = Math.max(.12 * L, Math.min(.25 * L, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
+    const dsp = new Float32Array(N), T = Math.max(.04 * L, Math.min(.08 * L, .15 * lamPx, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
     const t0 = performance.now();
     const frame = now => {
       const t = (now - t0) / 1000;
