@@ -939,6 +939,28 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     g.animate([{ transform:'none' }, { transform:'translateX(-100vw)' }],
               { duration:367, easing:'cubic-bezier(.55,0,.9,.35)' }).onfinish = () => g.remove();
   };
+  /* Nach 1,5 s Hover wird die Oberkante der Pille flüssig: sie wogt nach unten in die Pille hinein (CSS clip-path über --liq),
+     die beiden Enden links und rechts bleiben waagerecht auf der Oberkante. Nur mit Maus, nicht bei reduzierter Bewegung. */
+  const LIQ_AFTER = 1500, LIQ_N = 40, LIQ_DEPTH = 14, LIQ_RAMP = .8;   // Tiefe: % der Pillenhöhe; Anlauf in Sekunden
+  let liqTimer = 0, liqRaf = 0;
+  const liqEnd = () => { clearTimeout(liqTimer); cancelAnimationFrame(liqRaf); liqRaf = 0; a.style.removeProperty('--liq'); };
+  const liqStart = () => {
+    const t0 = performance.now(), ph = Math.random() * 6.3;
+    const frame = now => {
+      const t = (now - t0) / 1000, ramp = smoothStep(t / LIQ_RAMP), pts = [];
+      for (let i = 0; i <= LIQ_N; i++) {
+        const x = i / LIQ_N, win = smoothStep(Math.min(x, 1 - x) / .16);     // 0 an beiden Enden, weich: waagerecht
+        const n = .5 + .5 * (.6 * Math.sin(6.9 * x - 1.7 * t + ph) + .4 * Math.sin(14.5 * x + 2.2 * t + ph * 1.7));
+        pts.push(`${(x * 100).toFixed(2)}% ${(LIQ_DEPTH * ramp * win * n).toFixed(2)}%`);
+      }
+      a.style.setProperty('--liq', `polygon(${pts.join(',')},100% 100%,0 100%)`);
+      liqRaf = requestAnimationFrame(frame);
+    };
+    liqRaf = requestAnimationFrame(frame);
+  };
+  const smoothStep = k => (k = Math.min(1, Math.max(0, k)), k * k * (3 - 2 * k));
+  a.addEventListener('pointerenter', e => { if (calm.matches || e.pointerType !== 'mouse') return; liqEnd(); liqTimer = setTimeout(liqStart, LIQ_AFTER); });
+  a.addEventListener('pointerleave', liqEnd);
   let keyFocus = false;                       // Pille per Tastatur sichtbar?
   a.addEventListener('pointerleave', leave);
   a.addEventListener('focus', () => { keyFocus = a.matches(':focus-visible'); });
