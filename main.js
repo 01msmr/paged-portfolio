@@ -948,7 +948,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
   const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .12;   // Mittelwerte: Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 12 % der Pillenhöhe
-  const LIQ_TRAVEL = 1.2;                                               // mittlerer zurückgelegter Weg (Pillenbreiten) — 20 % langsamer als zuvor (1,5); die zufällige Streuung (0,5–1,9 ×) bleibt
+  const LIQ_TRAVEL = 1.2;                                               // mittlerer zurückgelegter Weg (Pillenbreiten) — 20 % langsamer als zuvor (1,5); die zufällige Streuung (0,1–1,9 ×) bleibt
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   // Zufall mit Glockenkurve (Normalverteilung, auf [lo, hi] begrenzt): Werte um den Mittelwert sind häufig, extreme selten
   const randN = (mean, sd, lo, hi) => { let v; do v = mean + sd * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random()); while (v < lo || v > hi); return v; };
@@ -976,12 +976,12 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const lam = lamPx / L, up = amp, base = up;
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // oben Luft für die Welle; Ecken zeichnet der Pfad selbst
     const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1;
-    const travel = LIQ_TRAVEL * randN(1, .35, .5, 1.9);                 // zufälliges Tempo: zurückgelegter Weg 0,5–1,9 ×, meist um 1 — deutlich unterschiedlich
+    const travel = LIQ_TRAVEL * randN(1, .45, .1, 1.9);                 // zufälliges Tempo: zurückgelegter Weg 0,1–1,9 × (auch sehr langsam), meist um 1 — deutlich unterschiedlich
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(dur * 60) + 2);
     // Seitentempo: nur EIN glatter Verlauf (smooth7, G3) — langsam–schnell–langsam, oder (Stärke ≈ 0) gleichmäßig langsam–langsam–langsam; keine weiteren Tempowechsel
-    const pk = randN(.6, .35, 0, 1.2);   // wie viel schneller die Mitte ist als Anfang/Ende (0 = durchgehend gleich)
+    const pk = randN(.2, .12, 0, .45);   // wie viel schneller die Mitte ist als Anfang/Ende (0 = durchgehend gleich)
     for (let i = 1; i < I.length; i++) I[i] = I[i - 1] + (1 + pk * bell((i - .5) / 60 / dur)) / 60;
     const Iat = t => { const x = Math.min(I.length - 2, Math.max(0, t * 60)), i = Math.floor(x); return (I[i] + (I[i + 1] - I[i]) * (x - i)) / I[I.length - 1]; };
     const dsp = new Float32Array(N), T = Math.max(.04 * L, Math.min(.08 * L, .15 * lamPx, (L - r) / 3)), f2 = q => q.toFixed(2);   // T: Länge der Auslaufstrecke an jedem Ende
