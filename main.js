@@ -966,14 +966,14 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const dur = randN(LIQ_DUR, .7, LIQ_DUR - 1.4, LIQ_DUR + 1.4);                                       // Dauer der Bewegung, glockenförmig um 7,2 s
     const cap = LIQ_AMP * H, q4 = 4 * Math.PI * Math.PI;
     // Zufällig je Bewegung: Zahl der Wellen (1–3 Kuppen auf dem geraden Stück), Höhe, Tempo und Richtung
-    const nWaves = Math.min(3, Math.max(1, Math.round(randN(2, .65, .5, 3.5)))), rMin = nWaves > 1 ? r / 2 : r;   // Zahl der Kuppen 1–3, am häufigsten 2                   // mehrere Kuppen dürfen etwas enger sein
+    const nWaves = Math.min(3, Math.max(1, Math.round(randN(2, .95, .5, 3.5)))), rMin = nWaves > 1 ? r / 2 : r;   // Zahl der Kuppen 1–3, etwas häufiger 2                   // mehrere Kuppen dürfen etwas enger sein
     let lamPx = (L - r) * .9 / nWaves * (.92 + .16 * Math.random()), amp = Math.max(Math.min(LIQ_MIN, cap), cap * randN(.72, .16, .4, 1));
     if (lamPx * lamPx / (q4 * amp) < rMin) amp = lamPx * lamPx / (q4 * rMin);
     else if (lamPx * lamPx / (q4 * amp) > 3 * r) { amp = Math.min(cap, lamPx * lamPx / (q4 * 3 * r)); if (lamPx * lamPx / (q4 * amp) > 3 * r) lamPx = Math.sqrt(q4 * amp * 3 * r); }
     const lam = lamPx / L, up = amp, base = up;
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // oben Luft für die Welle; Ecken zeichnet der Pfad selbst
     const N = LIQ_N, dir = Math.random() < .5 ? -1 : 1, ph1 = Math.random() * 6.3, ph2 = Math.random() * 6.3;
-    const travel = LIQ_TRAVEL * randN(1, .2, .6, 1.4);                  // zufälliges Tempo: zurückgelegter Weg 0,6–1,4 ×, meist um 1
+    const travel = LIQ_TRAVEL * randN(1, .35, .5, 1.9);                 // zufälliges Tempo: zurückgelegter Weg 0,5–1,9 ×, meist um 1 — deutlich unterschiedlich
     // Tempo über den ganzen Ablauf: erst langsam, dann schnell, dann wieder langsam (nie null, G3): Geschwindigkeit 1 + .7 · Glocke,
     // der Weg ist ihr Integral (vorab je 1/60 s), auf 0…1 normiert; die Welle legt damit LIQ_TRAVEL Breiten zurück
     const bell = k => smooth7(Math.min(k, 1 - k) / .5), I = new Float32Array(Math.ceil(dur * 60) + 2);
