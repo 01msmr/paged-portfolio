@@ -939,13 +939,15 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     g.animate([{ transform:'none' }, { transform:'translateX(-100vw)' }],
               { duration:367, easing:'cubic-bezier(.55,0,.9,.35)' }).onfinish = () => g.remove();
   };
-  /* Nach 1,5 s Hover kommt EINE Welle über die Oberkante der Pille: sie wächst, schwingt hoch und runter über und unter die
-     waagerechte Mittellinie, schrumpft wieder und verschwindet ganz — bis zum nächsten Hover kommt keine weitere. Ort, Breite,
-     Richtung des ersten Ausschlags und Zahl der Schwünge sind zufällig; sie steht an ihrem Platz. Die Pille bekommt oben Luft
-     (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst; die Enden links und rechts bleiben
-     waagerecht, und die breite, runde Kuppe läuft räumlich wie zeitlich mit stetiger Krümmung ein und aus (G3: (1−u²)⁴-Profil,
-     Fenster mit verschwindender 1.–3. Ableitung, Spline durch alle Stützstellen). Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1500, LIQ_N = 48, LIQ_AMP = .16;                    // Höhe über/unter der Mittellinie: Anteil der Pillenhöhe
+  /* Nach 1,5 s Hover regt sich die Oberkante der Pille flüssig — mit genau der Wellenfunktion der Kartenfüllung (7), dieselben Werte:
+     Spannung, Kopplung, Dämpfung, Tempo, Wölbung (Stärke, Breite ≈ 40 %), Nachlauf, Pendeln und Atmen. Anders als bei der Karte steigt der
+     Pegel nicht, die Kraft hat den Mittelwert 0 (Kuppe in der Mitte, die Seiten sinken — das Volumen bleibt), und die Wölbung folgt
+     nicht dem Cursor, sondern gleitet wie bei der Füllung auf Touch von selbst auf langsamen Bahnen. Die Kraft setzt nie aus, also
+     gibt es keine Pausen, solange der Hover dauert. Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px)
+     mit denselben Ecken wie sonst; die Enden links und rechts bleiben waagerecht und laufen mit stetiger Krümmung ein (G3), nie enger
+     gekrümmt als die Pillenenden (Radius r). Nur mit Maus, nicht bei reduzierter Bewegung. */
+  const LIQ_AFTER = 1500, LIQ_N = 44, LIQ_AMP = .16, LIQ_RAMP = 1;       // Höhe der Kuppe über der Mittellinie: Anteil der Pillenhöhe
+  const LQ = { TENSION:.0035, SPREAD:.44, DAMP:.988, PACE:.64, BULGE:.82, REACH:.24, LAG:.27 };   // = Füllung (7), unverändert
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
@@ -956,21 +958,39 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const fs = parseFloat(getComputedStyle(a).fontSize), W = a.clientWidth, H = a.clientHeight + .06 * fs;   // Pille: .02em über, .04em unter dem Link
     const r = Math.min(.54 * fs, W / 2), L = W - r, up = LIQ_AMP * H, base = up;                         // r: Eckenradius; L: gerade Strecke oben
     a.style.setProperty('--liq-up', up.toFixed(2) + 'px'); a.style.setProperty('--liq-r', '0');          // Ecken zeichnet der Pfad selbst
-    const n = Math.random() < .5 ? 3 : 4, hw = .15 + .09 * Math.random(), c = .05 + hw + Math.random() * (.9 - 2 * hw);
-    const sgn = Math.random() < .5 ? -1 : 1, A = LIQ_AMP * H * (.9 + .1 * Math.random()), dur = 1.4 * n * (.9 + .2 * Math.random());
-    const t0 = performance.now(), f2 = q => q.toFixed(2);
+    const N = LIQ_N, ph = Math.random() * 6.3, gs = new Float32Array(N);
+    // ein Schritt der Füllung (7): Zeit t, Zustand s = { y, v, ms }; Kraft mit Mittelwert 0, kein Pegel
+    const step = (s, t, dt) => {
+      const wander = .5 + .3 * Math.sin(t * .37 + ph) + .12 * Math.sin(t * .91 + ph * 2.3);   // wie die Füllung auf Touch
+      s.ms += (wander + .045 * Math.sin(t * .6 + ph) - s.ms) * (1 - Math.exp(-dt / LQ.LAG));
+      const lift = LQ.BULGE * (1 + .23 * Math.sin(t * .8 + ph));                                // schwillt an und ab, setzt nie aus
+      let gm = 0;
+      for (let i = 0; i < N; i++) { const d = (i / (N - 1) - s.ms) / LQ.REACH; gs[i] = Math.exp(-d * d); gm += gs[i]; }
+      gm /= N;
+      for (let i = 0; i < N; i++) {
+        const lo = s.y[i > 0 ? i - 1 : 0], hi = s.y[i < N - 1 ? i + 1 : N - 1];
+        const f = -LQ.TENSION * s.y[i] + LQ.SPREAD * (lo + hi - 2 * s.y[i]) - lift * (gs[i] - gm);   // < 0: über der Linie; Seiten sinken
+        s.v[i] = (s.v[i] + f * LQ.PACE) * LQ.DAMP ** LQ.PACE;
+      }
+      for (let i = 0; i < N; i++) s.y[i] += s.v[i] * LQ.PACE;
+    };
+    const fresh = () => ({ y: new Float32Array(N), v: new Float32Array(N), ms: .5 });
+    let peak = 1e-6; { const c = fresh(); for (let k = 0; k < 600; k++) { step(c, k / 60, 1 / 60); for (let i = 0; i < N; i++) peak = Math.max(peak, Math.abs(c.y[i])); } }   // Eichung: Welle ≈ LIQ_AMP · Pillenhöhe
+    const sc = LIQ_AMP * H / peak, S = fresh(), dsp = new Float32Array(N), dx = L / (N - 1), f2 = q => q.toFixed(2);
+    const t0 = performance.now(); let last = t0, ts = 0;
     const frame = now => {
-      const k = (now - t0) / 1000 / dur;
-      if (k >= 1) { liqEnd(); return; }                                 // weg — bis zum nächsten Hover
-      const amp = sgn * A * Math.sin(n * Math.PI * k) * smooth7(Math.min(k, 1 - k) * 4);   // hoch, runter, … wächst und schrumpft; endet bei 0
-      const P = i => {
-        const j = Math.max(0, Math.min(LIQ_N - 1, i)), x = j / (LIQ_N - 1), u = (x - c) / hw;
-        return [x * L, base - (Math.abs(u) < 1 ? amp * (1 - u * u) ** 4 : 0)];          // > 0: über der Oberkante
-      };
+      const dt = Math.min(.05, (now - last) / 1000), t = (now - t0) / 1000; last = now;
+      for (let k = Math.max(1, Math.round(dt * 60)); k > 0; k--) { step(S, ts, 1 / 60); ts += 1 / 60; }   // feste 60-Hz-Schritte wie die Füllung
+      const ramp = smooth7(t / LIQ_RAMP);
+      for (let j = 0; j < N; j++) { const x = j / (N - 1); dsp[j] = S.y[j] * sc * ramp * smooth7(Math.min(x, 1 - x) / .25); }   // Enden waagerecht, sehr sanft (G3)
+      let kmax = 0;                                                       // nie enger gekrümmt als die Pillenenden (Radius r)
+      for (let j = 1; j < N - 1; j++) { const d1 = (dsp[j + 1] - dsp[j - 1]) / (2 * dx), d2 = (dsp[j - 1] - 2 * dsp[j] + dsp[j + 1]) / (dx * dx); kmax = Math.max(kmax, Math.abs(d2) / (1 + d1 * d1) ** 1.5); }
+      const cl = kmax > 1 / r ? 1 / (r * kmax) : 1;
+      const P = i => { const j = Math.max(0, Math.min(N - 1, i)); return [j / (N - 1) * L, base + dsp[j] * cl]; };   // < base: über der Oberkante
       let [x1, y1] = P(0), d = `M${f2(x1)} ${f2(y1)}`;
-      for (let i = 0; i < LIQ_N - 1; i++) {                              // Catmull-Rom-Spline durch alle Stützstellen: glatt, keine Knicke
-        const [x0, y0] = P(i - 1); [x1, y1] = P(i); const [x2, y2] = P(i + 1), [x3, y3] = P(i + 2);
-        d += `C${f2(x1 + (x2 - x0) / 6)} ${f2(y1 + (y2 - y0) / 6)} ${f2(x2 - (x3 - x1) / 6)} ${f2(y2 - (y3 - y1) / 6)} ${f2(x2)} ${f2(y2)}`;
+      for (let i = 0; i < N - 1; i++) {                                  // Catmull-Rom-Spline durch alle Stützstellen: glatt, keine Knicke
+        const [xa, ya] = P(i - 1); [x1, y1] = P(i); const [x2, y2] = P(i + 1), [x3, y3] = P(i + 2);
+        d += `C${f2(x1 + (x2 - xa) / 6)} ${f2(y1 + (y2 - ya) / 6)} ${f2(x2 - (x3 - x1) / 6)} ${f2(y2 - (y3 - y1) / 6)} ${f2(x2)} ${f2(y2)}`;
       }
       d += `A${f2(r)} ${f2(r)} 0 0 1 ${f2(W)} ${f2(base + r)}L${f2(W)} ${f2(base + H - r)}A${f2(r)} ${f2(r)} 0 0 1 ${f2(L)} ${f2(base + H)}`
          + `L${f2(r)} ${f2(base + H)}A${f2(r)} ${f2(r)} 0 0 1 0 ${f2(base + H - r)}Z`;
