@@ -962,11 +962,22 @@ if (!calm.matches) {
   // (auch beim Umkehren mitten im Füllen). Maus: voll nach ≈ 1,5 s;
   // Touch: 85 % nach ≈ 0,39 s, passend zur Navigation (NAV_AFTER_FILL).
   const OMEGA = isTouchUI ? 8.4 : 4;   // 25 % langsamer als zuvor (10,5 / 5)
-  const PUSH = .015, PRESS = .02;    // seitliches Schieben / Drücken nahe der Oberfläche (sanft)
-  const BULGE = .8, REACH = .24;     // Wölbung zum Cursor: Stärke (hoch), Breite (Anteil der Kartenbreite)
-  const LAG = .35;                   // Sekunden: die Wölbung folgt einer geglätteten Cursorposition
-  const PACE = .5;                   // Wellen-Tempo: halb so schnell — sehr ruhig
+  const PUSH = .018, PRESS = .024;   // seitliches Schieben / Drücken nahe der Oberfläche (sanft) — +20 %
+  const BULGE = .75, REACH = .24;    // Wölbung zum Cursor: Stärke (Höhe der Welle +20 %, gemessen mit dem +20 % schnelleren Tempo), Breite (Anteil der Kartenbreite)
+  const LAG = .29;                   // Sekunden: die Wölbung folgt einer geglätteten Cursorposition (+20 % flinker)
+  const PACE = .6;                   // Wellen-Tempo (+20 % gegenüber .5)
   const FULL = 1.02;          // Ziel knapp über der Kante: hält oben an, ohne einen Spalt zu lassen
+  // Touch: wo der Finger zuletzt war (Bildschirm-x) — die Wölbung entsteht dort (auch beim Tippen auf die Navigation oder beim
+  // Wischen zur Karte) und entspannt sich nach ≈ 3 s wieder auf ihre wandernde Bahn
+  let touchX = null, touchT = -1e9, touching = false;
+  if (isTouchUI) {
+    const note = e => { const t = e.touches[0] || e.changedTouches[0]; if (t) { touchX = t.clientX; touchT = performance.now() / 1000; } };
+    const opt = { passive:true, capture:true };
+    addEventListener('touchstart', e => { touching = true; note(e); }, opt);
+    addEventListener('touchmove', note, opt);
+    const end = e => { touching = false; note(e); };
+    addEventListener('touchend', end, opt); addEventListener('touchcancel', end, opt);
+  }
   const live = new Set(); let raf = 0, t0 = 0;
   const fills = new Map();                                   // Touch: Bildschirm → Füllung starten
   fillAhead = el => fills.get(el)?.();                       // 0,33 s vor Ende des Gleitens (4)
@@ -1034,14 +1045,21 @@ if (!calm.matches) {
     s.lv += (OMEGA * OMEGA * (s.target - s.level) - 2 * OMEGA * s.lv) * dt;   // Feder: Beschleunigung aus Abstand und Tempo
     s.level += s.lv * dt;
     s.t += dt;
-    if (isTouchUI && s.mx !== null)               // kein Cursor: Wölbung gleitet ohne Pause auf überlagerten, langsamen Bahnen
-      s.mx = .5 + .3 * Math.sin(s.t * .37 + s.ph) + .12 * Math.sin(s.t * .91 + s.ph * 2.3);
+    if (isTouchUI && s.mx !== null) {             // kein Cursor: Wölbung gleitet auf überlagerten, langsamen Bahnen …
+      const wander = .5 + .3 * Math.sin(s.t * .37 + s.ph) + .12 * Math.sin(s.t * .91 + s.ph * 2.3);
+      if (touchX === null) s.mx = wander;
+      else {                                      // … und liegt dort, wo der Finger war (klingt nach ≈ 3 s ab)
+        const k = Math.exp(-(touching ? 0 : performance.now() / 1000 - touchT) / 3);
+        const at = Math.min(1, Math.max(0, (touchX - s.card.getBoundingClientRect().left) / s.w));
+        s.mx = wander + (at - wander) * k;
+      }
+    }
     if (s.mx === null) s.ms = null;           // geglättete Position: die Wölbung folgt träge, ohne Ruck
     else {
-      const sway = .035 * Math.sin(s.t * .6 + s.ph);   // auch bei ruhender Maus: sanftes Pendeln
+      const sway = .042 * Math.sin(s.t * .6 + s.ph);   // auch bei ruhender Maus: sanftes Pendeln
       s.ms = s.ms === null ? s.mx : s.ms + (s.mx + sway - s.ms) * (1 - Math.exp(-dt / LAG));
     }
-    const lift = BULGE * (1 + .18 * Math.sin(s.t * .8 + s.ph));   // Höhe schwillt leicht an und ab
+    const lift = BULGE * (1 + .216 * Math.sin(s.t * .8 + s.ph));   // Höhe schwillt leicht an und ab
     for (let i = 0; i < N; i++) {
       const l = y[i > 0 ? i - 1 : 0], r = y[i < N - 1 ? i + 1 : N - 1];
       let f = -TENSION * y[i] + SPREAD * (l + r - 2 * y[i]);
