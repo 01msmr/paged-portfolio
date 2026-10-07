@@ -948,7 +948,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
   const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .12;   // Mittelwerte: Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 12 % der Pillenhöhe
-  const LIQ_TRAVEL = 1.2;                                               // mittlerer zurückgelegter Weg (Pillenbreiten) — 20 % langsamer als zuvor (1,5); die zufällige Streuung (0,1–1,9 ×) bleibt
+  const LIQ_TRAVEL = 1.32;                                              // mittlerer zurückgelegter Weg (Pillenbreiten) — 20 % langsamer als zuvor (1,5); die zufällige Streuung (0,1–1,9 ×) bleibt
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   // Zufall mit Glockenkurve (Normalverteilung, auf [lo, hi] begrenzt): Werte um den Mittelwert sind häufig, extreme selten
   const randN = (mean, sd, lo, hi) => { let v; do v = mean + sd * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random()); while (v < lo || v > hi); return v; };
