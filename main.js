@@ -962,10 +962,10 @@ if (!calm.matches) {
   // (auch beim Umkehren mitten im Füllen). Maus: voll nach ≈ 1,5 s;
   // Touch: 85 % nach ≈ 0,39 s, passend zur Navigation (NAV_AFTER_FILL).
   const OMEGA = isTouchUI ? 8.4 : 4;   // 25 % langsamer als zuvor (10,5 / 5)
-  const PUSH = .018, PRESS = .024;   // seitliches Schieben / Drücken nahe der Oberfläche (sanft) — +20 %
-  const BULGE = .75, REACH = .24;    // Wölbung zum Cursor: Stärke (Höhe der Welle +20 %, gemessen mit dem +20 % schnelleren Tempo), Breite (Anteil der Kartenbreite)
-  const LAG = .29;                   // Sekunden: die Wölbung folgt einer geglätteten Cursorposition (+20 % flinker)
-  const PACE = .6;                   // Wellen-Tempo (+20 % gegenüber .5)
+  const PUSH = .0192, PRESS = .0256; // seitliches Schieben / Drücken nahe der Oberfläche (sanft) — +28 %
+  const BULGE = .82, REACH = .24;    // Wölbung zum Cursor: Stärke (Höhe der Welle +40 % gegenüber .8 bei Tempo .5), Breite (Anteil der Kartenbreite)
+  const LAG = .27;                   // Sekunden: die Wölbung folgt einer geglätteten Cursorposition (+28 % flinker)
+  const PACE = .64;                  // Wellen-Tempo (+28 % gegenüber .5)
   const FULL = 1.02;          // Ziel knapp über der Kante: hält oben an, ohne einen Spalt zu lassen
   // Touch: wo der Finger zuletzt war (Bildschirm-x) — die Wölbung entsteht dort (auch beim Tippen auf die Navigation oder beim
   // Wischen zur Karte) und entspannt sich nach ≈ 3 s wieder auf ihre wandernde Bahn
@@ -1056,10 +1056,10 @@ if (!calm.matches) {
     }
     if (s.mx === null) s.ms = null;           // geglättete Position: die Wölbung folgt träge, ohne Ruck
     else {
-      const sway = .042 * Math.sin(s.t * .6 + s.ph);   // auch bei ruhender Maus: sanftes Pendeln
+      const sway = .045 * Math.sin(s.t * .6 + s.ph);   // auch bei ruhender Maus: sanftes Pendeln
       s.ms = s.ms === null ? s.mx : s.ms + (s.mx + sway - s.ms) * (1 - Math.exp(-dt / LAG));
     }
-    const lift = BULGE * (1 + .216 * Math.sin(s.t * .8 + s.ph));   // Höhe schwillt leicht an und ab
+    const lift = BULGE * (1 + .23 * Math.sin(s.t * .8 + s.ph));   // Höhe schwillt leicht an und ab
     for (let i = 0; i < N; i++) {
       const l = y[i > 0 ? i - 1 : 0], r = y[i < N - 1 ? i + 1 : N - 1];
       let f = -TENSION * y[i] + SPREAD * (l + r - 2 * y[i]);
