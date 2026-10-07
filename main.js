@@ -939,7 +939,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     g.animate([{ transform:'none' }, { transform:'translateX(-100vw)' }],
               { duration:367, easing:'cubic-bezier(.55,0,.9,.35)' }).onfinish = () => g.remove();
   };
-  /* Nach 1,2 s Hover läuft 4,8 s lang eine Bewegung aus ein paar Wellen über die ganze Oberkante der Pille: kein Abschnitt mit eigenem Anfang und Ende,
+  /* Nach 1,2 s Hover läuft 7,2 s lang eine Bewegung aus ein paar Wellen über die ganze Oberkante der Pille: kein Abschnitt mit eigenem Anfang und Ende,
      sondern eine durchgehende, sinusförmige Welle (eine Kuppe, eine Mulde; die Kuppe höchstens ≈ 38 % der Breite), die mit
      seitlich wandert, mit weich wechselndem Tempo (nie null) — sie steht nie still. Sie wächst weich aus der Linie, schwillt und
      flacht wieder zur sauberen Linie ab. Mit 50 % Wahrscheinlichkeit läuft eine zweite, kleinere Welle mit anderem Tempo in Gegenrichtung
@@ -947,8 +947,8 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
      1.–3. Ableitung, kein Überschwingen); an den Pillenenden läuft die Welle nur dadurch aus. Nie enger gekrümmt als die Pillenenden
      (Radius r). Die Pille bekommt oben Luft (--liq-up) und wird als Pfad beschnitten (--liq, px) mit denselben Ecken wie sonst.
      Nur mit Maus, nicht bei reduzierter Bewegung. */
-  const LIQ_AFTER = 1200, LIQ_DUR = 4.8, LIQ_N = 64, LIQ_AMP = .15, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 4,8 s; Höhe: höchstens 15 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
-  const LIQ_TRAVEL = 1;                                                 // zurückgelegter Weg (Pillenbreiten) — doppelt so schnell wie zuvor (.5)
+  const LIQ_AFTER = 1200, LIQ_DUR = 7.2, LIQ_N = 64, LIQ_AMP = .15, LIQ_MIN = 7;   // Beginn nach 1,2 s Hover, die Bewegung dauert 7,2 s (1,5 × so lang); Höhe: höchstens 15 % der Pillenhöhe, möglichst mindestens LIQ_MIN px
+  const LIQ_TRAVEL = 1.5;                                               // zurückgelegter Weg (Pillenbreiten): 1,5 × so lang bei gleichem Tempo
   const smooth7 = k => (k = Math.min(1, Math.max(0, k)), k ** 4 * (35 - 84 * k + 70 * k * k - 20 * k ** 3));   // 0→1, Ableitungen 1–3 an beiden Enden 0
   let liqTimer = 0, liqRaf = 0;
   const liqEnd = () => {
@@ -976,7 +976,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const t0 = performance.now();
     const frame = now => {
       const t = (now - t0) / 1000;
-      if (t >= LIQ_DUR) { liqEnd(); return; }                             // Ende nach 4,8 s Bewegung: saubere Linie
+      if (t >= LIQ_DUR) { liqEnd(); return; }                             // Ende nach 7,2 s Bewegung: saubere Linie
       const gate = smooth7(Math.min(t, LIQ_DUR - t) / (LIQ_DUR / 2));      // wächst bis zur Mitte und geht genauso wieder: das Gehen ist das Spiegelbild des Kommens — G3, nie plötzlich weg
       // seitliche Bewegung: klar sichtbar (LIQ_TRAVEL Breiten) mit leicht zufälligem Wiegen
       const c = .5 + dir * LIQ_TRAVEL * (Iat(t) - .5) + .022 * Math.sin(1.7 * t + ph1) + .015 * Math.sin(3.1 * t + ph2);
