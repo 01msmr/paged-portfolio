@@ -962,7 +962,7 @@ document.querySelectorAll('.title a, .links a').forEach(a => {
     const r = Math.min(.54 * fs, W / 2), L = W - r;                                                      // r: Eckenradius; L: gerade Strecke oben
     // Höhe und Breite der Welle sind zufällig: die Wellenlänge λ liegt zwischen 40 % und 80 % der Pillenbreite (Kuppe λ/2 ≤ 40 %), die
     // Höhe zwischen 50 % und 100 % von LIQ_AMP · Pillenhöhe (12 %). Der Krümmungsradius der Kuppe, cos(2π (x − c(t)) / λ): λ² / (4π² · Höhe),
-    // muss zwischen r und 3 r liegen (r: Radius der Pillenenden): zu spitz → flacher; zu flach → höher (bis 15 %), sonst schmaler.
+    // muss zwischen r und 3 r liegen (r: Radius der Pillenenden): zu spitz → flacher; zu flach → höher (bis 12 %), sonst schmaler.
     const dur = randN(LIQ_DUR, .7, LIQ_DUR - 1.4, LIQ_DUR + 1.4);                                       // Dauer der Bewegung, glockenförmig um 7,2 s
     const cap = LIQ_AMP * H, q4 = 4 * Math.PI * Math.PI;
     // Zufällig je Bewegung: Zahl der Wellen (1–3 Kuppen auf dem geraden Stück), Höhe, Tempo und Richtung
