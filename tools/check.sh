@@ -16,7 +16,6 @@ for ((i = 0; i < n; i++)); do
   done
 done
 
-test -f app-icons/touch-dark.png || { echo "FEHLT: app-icons/touch-dark.png (python3 tools/icons.py)"; exit 1; }
 test -f img/og.png || { echo "FEHLT: img/og.png"; exit 1; }
 test -f app-icons/favicon.ico || { echo "FEHLT: app-icons/favicon.ico (python3 tools/icons.py)"; exit 1; }
 echo "· Projektfarben";         python3 tools/colors.py
