@@ -50,6 +50,10 @@ $icon = random_int(0, $n - 1);               // Icon in einer der Projektfarben 
 <link rel="icon" href="<?= asset("app-icons/fav-$icon.svg") ?>" type="image/svg+xml">
 <link rel="icon" href="<?= asset("app-icons/fav-$icon-32.png") ?>" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="<?= asset("app-icons/touch-0.png") ?>">
+<script>   // iOS ignoriert media am apple-touch-icon: Link nach Farbschema setzen (das Icon der Home-Bildschirm-Verknüpfung stammt aus dem Link beim Hinzufügen)
+(() => { const q = matchMedia('(prefers-color-scheme: dark)'), l = document.querySelector('link[rel="apple-touch-icon"]'), light = l.href, dark = <?= json_encode(asset("app-icons/touch-dark.png")) ?>;
+  const set = () => { l.href = q.matches ? dark : light; }; set(); q.addEventListener('change', set); })();
+</script>
 <link rel="manifest" href="site.webmanifest.php">
 <link rel="stylesheet" href="<?= asset('style.css') ?>">
 </head>

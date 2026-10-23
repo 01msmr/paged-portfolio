@@ -5,8 +5,8 @@
     python3 tools/icons.py
 
 Schreibt nach app-icons/: favicon.ico (16/32/48 px, Farbe des ersten Projekts — für Anfragen nach /favicon.ico, die der Server
-sonst mit seinem Standard-Icon beantwortet), fav-<n>.svg und fav-<n>-32.png (Browser, nur »m« — bei 16–32 px lesbar), touch-<n>.png
-(iOS, 180 px, mit dünnem weißem Rand um die Schrift; ein Icon für Hell und Dunkel — iOS dunkelt es selbst ab), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
+sonst mit seinem Standard-Icon beantwortet), fav-<n>.svg und fav-<n>-32.png (Browser, nur »m« — bei 16–32 px lesbar), touch-<n>.png / touch-dark.png
+(iOS, 180 px; Home-Bildschirm-Icon: touch-0 hell, touch-dark dunkel, beide in der Farbe des ersten Projekts), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
 Die Seite wählt beim Laden per Zufall eine Farbe.
 """
 import io, math, re, subprocess, pathlib
@@ -22,7 +22,7 @@ OUT.mkdir(exist_ok=True)
 # Projektfarben (oklch 70 % …), Reihenfolge = Zeitleiste
 import json
 HUES = [tuple(p['hue']) + (() if len(p['hue']) > 2 else (.7,)) for p in json.load(open(ROOT / 'projects.json'))]   # eine Quelle: projects.json; (C, h, L), L sonst 70 %
-INK, PAPER = '#191b1d', '#fff'
+INK, PAPER, PAPER_DARK = '#191b1d', '#fff', '#0e0f10'   # PAPER_DARK = --bg im Dunkelmodus (style.css)
 
 
 def oklch_hex(L, C, h):
@@ -58,7 +58,7 @@ def word_path(text, size, tracking=-.065):
     return tidy(' '.join(parts)), x, cap
 
 
-def svg(color, size=100, pad=0, paper=None, word='msmr', fill=1.3, outline=0):
+def svg(color, size=100, pad=0, paper=None, word='msmr', fill=1.3):
     """Form + Schrift. pad: Rand um die Form, paper: Hintergrund (iOS), fill: Wortbreite relativ zum Radius."""
     R = (size - 2 * pad) / 2
     cx = cy = size / 2
@@ -72,10 +72,8 @@ def svg(color, size=100, pad=0, paper=None, word='msmr', fill=1.3, outline=0):
     d, w, xh = word_path(word, fs)
     tx, ty = cx - w / 2, cy + xh / 2                           # optisch mittig auf der x-Höhe
     bg = f'<rect width="{size}" height="{size}" fill="{paper}"/>' if paper else ''
-    # outline: dünner weißer Rand um die Schrift (iOS dunkelt die Kachel im Dunkelmodus ab, die Schrift bleibt dunkel — der Rand hält sie lesbar, wie in a.msmr.co)
-    halo = f'<path transform="translate({tx:.2f} {ty:.2f})" d="{d}" fill="#fff" stroke="#fff" stroke-width="{2 * outline}" stroke-linejoin="round"/>' if outline else ''
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}">{bg}'
-            f'<path d="{tidy(shape)}" fill="{color}"/>{halo}'
+            f'<path d="{tidy(shape)}" fill="{color}"/>'
             f'<path transform="translate({tx:.2f} {ty:.2f})" d="{d}" fill="{INK}"/></svg>')
 
 
@@ -114,7 +112,8 @@ for n, (C, h, L) in enumerate(HUES):
     (OUT / f'fav-{n}.svg').write_text(fav)
     png(fav, 32, OUT / f'fav-{n}-32.png')
     if n == 0: ico(fav, OUT / 'favicon.ico')                   # Anfragen nach /favicon.ico (siehe .htaccess)
-    png(svg(col, pad=IOS_PAD, paper=PAPER, outline=1.25), 180, OUT / f'touch-{n}.png')   # iOS: gerade so viel Rand, dass die eckige Ecke bleibt
+    png(svg(col, pad=IOS_PAD, paper=PAPER), 180, OUT / f'touch-{n}.png')   # iOS: gerade so viel Rand, dass die eckige Ecke bleibt
+    if n == 0: png(svg(col, pad=IOS_PAD, paper=PAPER_DARK), 180, OUT / 'touch-dark.png')   # iOS im Dunkelmodus: nur der Grund hinter der Kachel ist dunkel
     png(svg(col, pad=IOS_PAD, paper=PAPER), 192, OUT / f'icon-192-{n}.png')   # Android ohne Maske / Manifest
     png(svg(col, pad=IOS_PAD, paper=PAPER), 512, OUT / f'icon-512-{n}.png')
     png(maskable(col), 192, OUT / f'maskable-192-{n}.png')        # Android: maskierbar
