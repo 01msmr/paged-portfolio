@@ -6,7 +6,7 @@
 
 Schreibt nach app-icons/: favicon.ico (16/32/48 px, Farbe des ersten Projekts — für Anfragen nach /favicon.ico, die der Server
 sonst mit seinem Standard-Icon beantwortet), fav-<n>.svg und fav-<n>-32.png (Browser, nur »m« — bei 16–32 px lesbar), touch-<n>.png
-(iOS, 180 px, transparenter Grund: im Dunkelmodus schwarz, kein zweites Icon nötig), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
+(iOS, 180 px), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
 Die Seite wählt beim Laden per Zufall eine Farbe.
 """
 import io, math, re, subprocess, pathlib
@@ -112,7 +112,7 @@ for n, (C, h, L) in enumerate(HUES):
     (OUT / f'fav-{n}.svg').write_text(fav)
     png(fav, 32, OUT / f'fav-{n}-32.png')
     if n == 0: ico(fav, OUT / 'favicon.ico')                   # Anfragen nach /favicon.ico (siehe .htaccess)
-    png(svg(col, pad=IOS_PAD, paper=None), 180, OUT / f'touch-{n}.png')   # iOS: transparenter Grund — iOS 18 zeigt ihn im Dunkelmodus schwarz; eine Datei, nicht tauschbar nach dem Hinzufügen
+    png(svg(col, pad=IOS_PAD, paper=PAPER), 180, OUT / f'touch-{n}.png')   # iOS: gerade so viel Rand, dass die eckige Ecke bleibt
     png(svg(col, pad=IOS_PAD, paper=PAPER), 192, OUT / f'icon-192-{n}.png')   # Android ohne Maske / Manifest
     png(svg(col, pad=IOS_PAD, paper=PAPER), 512, OUT / f'icon-512-{n}.png')
     png(maskable(col), 192, OUT / f'maskable-192-{n}.png')        # Android: maskierbar
