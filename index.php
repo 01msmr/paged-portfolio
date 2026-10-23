@@ -20,6 +20,7 @@ function target($url) {
 }
 // Dateien mit Änderungszeit als Version: lange gecacht, bei Änderung sofort neu
 function asset($file) { return $file . '?v=' . filemtime(__DIR__ . '/' . $file); }
+function icon_data($file) { return 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/' . $file)); }   // Icon als data:-URI (iOS-Dialog lädt URLs nicht)
 
 $words = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve'];
 $count = $words[$n] ?? (string)$n;
@@ -50,9 +51,10 @@ $icon = random_int(0, $n - 1);               // Icon in einer der Projektfarben 
 <link rel="icon" href="<?= asset("app-icons/fav-$icon.svg") ?>" type="image/svg+xml">
 <link rel="icon" href="<?= asset("app-icons/fav-$icon-32.png") ?>" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="<?= asset("app-icons/touch-$icon.png") ?>">
-<script>   // iOS ignoriert media am apple-touch-icon und füllt transparente Icons schwarz: Link nach Farbschema setzen (das Icon der Verknüpfung stammt aus dem Link beim Hinzufügen)
-(() => { const q = matchMedia('(prefers-color-scheme: dark)'), l = document.querySelector('link[rel="apple-touch-icon"]'), light = l.href, dark = <?= json_encode(asset("app-icons/touch-dark-$icon.png")) ?>;
-  const set = () => { l.href = q.matches ? dark : light; }; set(); q.addEventListener('change', set); })();
+<script>   // iOS ignoriert media am apple-touch-icon und lädt es im Hinzufügen-Dialog nicht von einer URL (iOS 27.2): Link nach Farbschema setzen, Icons als data:-URI (wie a.msmr.co)
+(() => { const q = matchMedia('(prefers-color-scheme: dark)'), ICONS = { light: '<?= icon_data("app-icons/touch-$icon.png") ?>', dark: '<?= icon_data("app-icons/touch-dark-$icon.png") ?>' };
+  const set = () => { document.querySelectorAll('link[rel="apple-touch-icon"]').forEach(l => l.remove()); const l = document.createElement('link'); l.rel = 'apple-touch-icon'; l.href = q.matches ? ICONS.dark : ICONS.light; document.head.appendChild(l); };
+  set(); q.addEventListener('change', set); })();
 </script>
 <link rel="manifest" href="site.webmanifest.php">
 <link rel="stylesheet" href="<?= asset('style.css') ?>">
