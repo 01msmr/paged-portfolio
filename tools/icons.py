@@ -23,6 +23,7 @@ OUT.mkdir(exist_ok=True)
 import json
 HUES = [tuple(p['hue']) + (() if len(p['hue']) > 2 else (.7,)) for p in json.load(open(ROOT / 'projects.json'))]   # eine Quelle: projects.json; (C, h, L), L sonst 70 %
 INK, PAPER = '#191b1d', '#fff'
+PAPER_IOS = '#e6e6e9'   # iOS-Icon: deckender hellgrauer Grund wie bei a.msmr.co — iOS erkennt ihn als Hintergrund und füllt ihn im Dunkelmodus selbst; reines Weiß blieb weiß
 
 
 def oklch_hex(L, C, h):
@@ -112,7 +113,7 @@ for n, (C, h, L) in enumerate(HUES):
     (OUT / f'fav-{n}.svg').write_text(fav)
     png(fav, 32, OUT / f'fav-{n}-32.png')
     if n == 0: ico(fav, OUT / 'favicon.ico')                   # Anfragen nach /favicon.ico (siehe .htaccess)
-    png(svg(col, pad=IOS_PAD, paper=None), 180, OUT / f'touch-{n}.png')   # iOS: transparenter Grund — iOS füllt ihn selbst (dunkel im Dunkelmodus), eine Datei, kein Tausch nach dem Hinzufügen
+    png(svg(col, pad=IOS_PAD, paper=PAPER_IOS), 180, OUT / f'touch-{n}.png')   # iOS: gerade so viel Rand, dass die eckige Ecke bleibt
     png(svg(col, pad=IOS_PAD, paper=PAPER), 192, OUT / f'icon-192-{n}.png')   # Android ohne Maske / Manifest
     png(svg(col, pad=IOS_PAD, paper=PAPER), 512, OUT / f'icon-512-{n}.png')
     png(maskable(col), 192, OUT / f'maskable-192-{n}.png')        # Android: maskierbar

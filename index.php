@@ -20,6 +20,7 @@ function target($url) {
 }
 // Dateien mit Änderungszeit als Version: lange gecacht, bei Änderung sofort neu
 function asset($file) { return $file . '?v=' . filemtime(__DIR__ . '/' . $file); }
+function icon_data($file) { return 'data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/' . $file)); }
 
 $words = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve'];
 $count = $words[$n] ?? (string)$n;
@@ -49,7 +50,7 @@ $icon = random_int(0, $n - 1);               // Icon in einer der Projektfarben 
 <link rel="preload" href="fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="<?= asset("app-icons/fav-$icon.svg") ?>" type="image/svg+xml">
 <link rel="icon" href="<?= asset("app-icons/fav-$icon-32.png") ?>" sizes="32x32" type="image/png">
-<link rel="apple-touch-icon" href="<?= asset("app-icons/touch-$icon.png") ?>">
+<link rel="apple-touch-icon" href="<?= icon_data("app-icons/touch-$icon.png") ?>">   <!-- data:-URI wie bei a.msmr.co: der iOS-Dialog lädt URLs nicht (iOS 27.2) -->
 <link rel="manifest" href="site.webmanifest.php">
 <link rel="stylesheet" href="<?= asset('style.css') ?>">
 </head>
