@@ -13,7 +13,7 @@ No build step and no framework. The server renders one PHP page from a JSON list
 | `style.css`, `main.js` | styling and behaviour. Shared values (colours, line widths `--stroke`/`--nav-line`, nav timing `--nav-t`/`--nav-ease`) live in `:root` of `style.css`; `main.js` reads the nav timing from there and is organised in numbered blocks (see its header) |
 | `img/<name>.webp` | screenshot of a project: shown on double-click, and drawn as a halftone on click |
 | `fonts/` | Hanken Grotesk (Latin subset, SIL OFL), served from this site; used for everything |
-| `app-icons/`, `site.webmanifest.php` | favicons, iOS and Android icons in every project colour; page and manifest pick one at random on each request |
+| `app-icons/`, `site.webmanifest.php` | favicons, iOS and Android icons in every project colour; page and manifest pick one at random on each request (see "Home screen icon") |
 | `tools/icons.py` | regenerates the icons from `projects.json` (needs fontTools and ImageMagick) |
 | `tools/colors.py` | checks the colour rule for all projects and suggests colours (see below) |
 | `.htaccess` | caching and compression rules for the server |
@@ -77,6 +77,16 @@ Playwright starts its own `php -S` on port 8765 and runs two environments: `desk
    ```
 
    When you replace an image, raise the `?v=` number in `shot` so browsers load the new one.
+
+## Home screen icon
+
+The iOS icon (`app-icons/touch-<n>.png`, one per project colour, picked at random per request) is a single opaque RGB PNG: the coloured tile on an **opaque light grey** paper (`#e6e6e9`, `PAPER_IOS` in `tools/icons.py`). `index.php` links it as a `data:` URI (`icon_data()`).
+
+- **Why one file, grey paper:** after "Add to Home Screen", iOS fills the background of such an icon itself, light or dark with the system appearance. Pure white paper stayed white, a transparent background was always black, and iOS ignores `media="(prefers-color-scheme: dark)"` on `apple-touch-icon`. A web shortcut cannot bring its own dark variant, and the icon of an existing shortcut does not change; add it again to pick up a new one. The same grey is used by a.msmr.co.
+- **Why `data:`:** the Add to Home Screen dialog of iOS 27.2 does not load the touch icon from a network URL.
+- **No outline, no second icon, no script.** Tried and dropped: white outline around the letters, dark/light pair swapped by script, transparent paper.
+- Android (`icon-*`, `maskable-*`, `site.webmanifest.php`) and the browser favicons are unchanged: white paper (or full colour) and no dark variant.
+- After a change: `python3 tools/icons.py`, then check on an iPhone in light and dark appearance.
 
 ## Behaviour
 

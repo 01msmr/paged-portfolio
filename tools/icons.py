@@ -6,7 +6,7 @@
 
 Schreibt nach app-icons/: favicon.ico (16/32/48 px, Farbe des ersten Projekts — für Anfragen nach /favicon.ico, die der Server
 sonst mit seinem Standard-Icon beantwortet), fav-<n>.svg und fav-<n>-32.png (Browser, nur »m« — bei 16–32 px lesbar), touch-<n>.png
-(iOS, 180 px), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
+(iOS, 180 px, deckender hellgrauer Grund: iOS füllt ihn im Dunkelmodus selbst, siehe README »Home screen icon«), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
 Die Seite wählt beim Laden per Zufall eine Farbe.
 """
 import io, math, re, subprocess, pathlib
