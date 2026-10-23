@@ -5,8 +5,8 @@
     python3 tools/icons.py
 
 Schreibt nach app-icons/: favicon.ico (16/32/48 px, Farbe des ersten Projekts — für Anfragen nach /favicon.ico, die der Server
-sonst mit seinem Standard-Icon beantwortet), fav-<n>.svg und fav-<n>-32.png (Browser, nur »m« — bei 16–32 px lesbar), touch-<n>.png
-(iOS, 180 px), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
+sonst mit seinem Standard-Icon beantwortet), fav-<n>.svg und fav-<n>-32.png (Browser, nur »m« — bei 16–32 px lesbar), touch-<n>.png / touch-dark-<n>.png
+(iOS, 180 px; heller bzw. dunkler Grund, die Seite wählt per Skript nach Farbschema), icon-192-<n>.png / icon-512-<n>.png (Android; site.webmanifest.php wählt per Zufall).
 Die Seite wählt beim Laden per Zufall eine Farbe.
 """
 import io, math, re, subprocess, pathlib
@@ -22,7 +22,7 @@ OUT.mkdir(exist_ok=True)
 # Projektfarben (oklch 70 % …), Reihenfolge = Zeitleiste
 import json
 HUES = [tuple(p['hue']) + (() if len(p['hue']) > 2 else (.7,)) for p in json.load(open(ROOT / 'projects.json'))]   # eine Quelle: projects.json; (C, h, L), L sonst 70 %
-INK, PAPER = '#191b1d', '#fff'
+INK, PAPER, PAPER_DARK = '#191b1d', '#fff', '#0e0f10'   # PAPER_DARK = --bg im Dunkelmodus (style.css)
 
 
 def oklch_hex(L, C, h):
@@ -112,7 +112,8 @@ for n, (C, h, L) in enumerate(HUES):
     (OUT / f'fav-{n}.svg').write_text(fav)
     png(fav, 32, OUT / f'fav-{n}-32.png')
     if n == 0: ico(fav, OUT / 'favicon.ico')                   # Anfragen nach /favicon.ico (siehe .htaccess)
-    png(svg(col, pad=IOS_PAD, paper=None), 180, OUT / f'touch-{n}.png')   # iOS: transparenter Grund — iOS füllt ihn selbst (dunkel im Dunkelmodus), eine Datei, kein Tausch nach dem Hinzufügen
+    png(svg(col, pad=IOS_PAD, paper=PAPER), 180, OUT / f'touch-{n}.png')   # iOS: gerade so viel Rand, dass die eckige Ecke bleibt
+    png(svg(col, pad=IOS_PAD, paper=PAPER_DARK), 180, OUT / f'touch-dark-{n}.png')   # iOS im Dunkelmodus: nur der Grund hinter der Kachel ist dunkel
     png(svg(col, pad=IOS_PAD, paper=PAPER), 192, OUT / f'icon-192-{n}.png')   # Android ohne Maske / Manifest
     png(svg(col, pad=IOS_PAD, paper=PAPER), 512, OUT / f'icon-512-{n}.png')
     png(maskable(col), 192, OUT / f'maskable-192-{n}.png')        # Android: maskierbar
