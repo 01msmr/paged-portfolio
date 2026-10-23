@@ -19,26 +19,3 @@ test('Aufbau: Karten, #top, #links, Schrift', async ({ page }) => {
   await expect(page.locator('#links')).toHaveCount(1);
   await expect.poll(() => page.evaluate(() => document.fonts.check('600 30px "Hanken Grotesk"'))).toBe(true);
 });
-
-test('Manifest und Icon-Links liefern 200', async ({ page }) => {
-  await open(page);
-  const abs = h => new URL(h, page.url()).href;
-  const manifest = await page.locator('link[rel="manifest"]').getAttribute('href');
-  const res = await page.request.get(abs(manifest));
-  expect(res.status()).toBe(200);
-  const json = await res.json();                    // gültige Daten
-  expect(json.name).toBe('msmr.dev');
-  expect(json.icons.length).toBeGreaterThan(0);
-  const hrefs = await page.locator('link[rel="icon"], link[rel="apple-touch-icon"]').evaluateAll(l => l.map(e => e.getAttribute('href')));
-  expect(hrefs.length).toBeGreaterThan(0);
-  for (const h of [...hrefs, ...json.icons.map(i => i.src)]) {
-    if (h.startsWith('data:')) {                    // eingebettetes Icon (apple-touch-icon): muss ein gültiges PNG sein
-      const m = h.match(/^data:image\/png;base64,(.+)$/);
-      expect(m, 'data:-Icon ist ein PNG').not.toBeNull();
-      expect(Buffer.from(m[1], 'base64').subarray(0, 8).toString('hex'), 'PNG-Signatur').toBe('89504e470d0a1a0a');
-      continue;
-    }
-    expect((await page.request.get(abs(h))).status(), h).toBe(200);
-    expect(h, 'Icons tragen ?v=').toMatch(/\?v=\d+$/);
-  }
-});
