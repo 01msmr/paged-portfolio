@@ -32,6 +32,12 @@ test('Manifest und Icon-Links liefern 200', async ({ page }) => {
   const hrefs = await page.locator('link[rel="icon"], link[rel="apple-touch-icon"]').evaluateAll(l => l.map(e => e.getAttribute('href')));
   expect(hrefs.length).toBeGreaterThan(0);
   for (const h of [...hrefs, ...json.icons.map(i => i.src)]) {
+    if (h.startsWith('data:')) {                    // eingebettetes Icon (apple-touch-icon): muss ein gültiges PNG sein
+      const m = h.match(/^data:image\/png;base64,(.+)$/);
+      expect(m, 'data:-Icon ist ein PNG').not.toBeNull();
+      expect(Buffer.from(m[1], 'base64').subarray(0, 8).toString('hex'), 'PNG-Signatur').toBe('89504e470d0a1a0a');
+      continue;
+    }
     expect((await page.request.get(abs(h))).status(), h).toBe(200);
     expect(h, 'Icons tragen ?v=').toMatch(/\?v=\d+$/);
   }
