@@ -1,5 +1,18 @@
 [
   {
+    "id": "linktree",
+    "name": "linktree",
+    "hue": [0.08, 326, 0.91],
+    "url": "https://l.msmr.co",
+    "title": [
+      { "label": "linktree", "url": "https://l.msmr.co" },
+      { "label": "GitHub", "url": "https://github.com/01msmr/linktree" }
+    ],
+    "text": "link page with folders, keyboard navigation and inline editing.",
+    "tech": ["HTML", "CSS", "Vanilla JS", "PHP", "Claude"],
+    "shot": "img/linktree.webp?v=1"
+  },
+  {
     "id": "msmrdev",
     "name": "paged portfolio",
     "hue": [0.16, 256, 0.69],
