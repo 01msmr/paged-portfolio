@@ -3,12 +3,12 @@
     "id": "linktree",
     "name": "linktree",
     "hue": [0.15, 168, 0.82],
-    "url": "https://l.msmr.co",
+    "url": "https://tree.msmr.co",
     "title": [
-      { "label": "linktree", "url": "https://l.msmr.co" },
+      { "label": "linktree", "url": "https://tree.msmr.co" },
       { "label": "GitHub", "url": "https://github.com/01msmr/linktree" }
     ],
-    "text": "link page with folders, keyboard navigation and inline editing.",
+    "text": "brutalist link page with a tree structure and inline editing.",
     "tech": ["HTML", "CSS", "Vanilla JS", "PHP", "Claude"],
     "shot": "img/linktree.webp?v=1"
   },
