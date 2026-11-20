@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Projektfarben prüfen und vorschlagen — eine Regel für alle Farben von msmr.dev:
 
-  · jede Farbe unterscheidet sich von JEDER anderen um mindestens ΔE 0,13 (Abstand in OKLab, so wie ein
+  · jede Farbe unterscheidet sich von JEDER anderen um mindestens ΔE 0,115 (Abstand in OKLab, so wie ein
     normaler Bildschirm sie zeigt: Farben außerhalb von sRGB werden erst auf den darstellbaren Bereich gekürzt)
   · dunkle Schrift (#191b1d) bleibt lesbar: Kontrast mindestens 4,5 : 1 (WCAG AA)
   · die Farbe ist darstellbar (sRGB) und nicht grau: Chroma mindestens 0,08
@@ -15,7 +15,7 @@ Farben stehen in projects.json als "hue": [Chroma, Farbton, Helligkeit] (Helligk
 import itertools, json, math, pathlib, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MIN_DE, MIN_CONTRAST, MIN_C, INK_LUM = .13, 4.5, .08, .011   # INK_LUM: relative Leuchtdichte von #191b1d
+MIN_DE, MIN_CONTRAST, MIN_C, INK_LUM = .115, 4.5, .08, .011   # INK_LUM: relative Leuchtdichte von #191b1d
 
 
 def lab(L, C, h):

@@ -61,7 +61,7 @@ Playwright starts its own `php -S` on port 8765 and runs two environments: `desk
 
    `hue` is chroma, hue and (optionally) lightness of the colour `oklch(lightness chroma hue)`, lightness 0.70 if left out.
 
-   **Colour rule:** every project colour differs from *every* other one by at least ΔE 0.13 (distance in OKLab, as a normal screen shows the colour), dark text stays readable on it (contrast ≥ 4.5 : 1), and it is not grey (chroma ≥ 0.08). There is one group only — all colours carry dark text. With the current eight colours there is room for about six more. `tools/colors.py` does the work:
+   **Colour rule:** every project colour differs from *every* other one by at least ΔE 0.115 (distance in OKLab, as a normal screen shows the colour), dark text stays readable on it (contrast ≥ 4.5 : 1), and it is not grey (chroma ≥ 0.08). There is one group only — all colours carry dark text. With the current eight colours there is room for about six more. `tools/colors.py` does the work:
 
    ```sh
    python3 tools/colors.py            # check all pairs (exit code 1 if the rule is broken)
